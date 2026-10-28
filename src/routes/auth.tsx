@@ -7,10 +7,10 @@ import { Logo } from "@/components/SiteHeader";
 import hero from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    mode: s.mode === "signup" ? ("signup" as const) : ("signin" as const),
-    next: typeof s.next === "string" && s.next.startsWith("/") ? s.next : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined } => {
+    const n = s["next"];
+    return { mode: s["mode"] === "signup" ? "signup" : "signin", next: typeof n === "string" && n.startsWith("/") ? n : undefined };
+  },
   head: () => ({
     meta: [
       { title: "Sign in or create an account — RentReady" },
@@ -43,12 +43,12 @@ function AuthPage() {
         options: { emailRedirectTo: window.location.origin, data: { full_name: f.get("name"), phone: f.get("phone") } },
       });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       setSent(true);
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       toast.success("Welcome back!");
       navigate({ to: next ?? "/" });
     }
@@ -56,7 +56,7 @@ function AuthPage() {
 
   async function google() {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) return toast.error("Google sign-in failed");
+    if (r.error) { toast.error("Google sign-in failed"); return; }
     if (r.redirected) return;
     navigate({ to: next ?? "/" });
   }

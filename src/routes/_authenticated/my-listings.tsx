@@ -34,7 +34,7 @@ function MyListings() {
   async function remove(id: string) {
     if (!confirm("Remove this listing?")) return;
     const { error } = await supabase.from("listings").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Listing removed");
     qc.invalidateQueries({ queryKey: ["my-listings"] });
   }
