@@ -32,14 +32,14 @@ function PostPage() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const price = Number(String(f.get("price")).replace(/,/g, ""));
-    if (!price || price <= 0) return toast.error("Enter your price in Naira");
+    if (!price || price <= 0) { toast.error("Enter your price in Naira"); return; }
     setBusy(true);
     let image_url: string | null = null;
     const file = f.get("image") as File;
     if (file && file.size) {
       const path = `${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.]/g, "")}`;
       const up = await supabase.storage.from("listing-images").upload(path, file);
-      if (up.error) { setBusy(false); return toast.error("Photo upload failed"); }
+      if (up.error) { setBusy(false); toast.error("Photo upload failed"); return; }
       const signed = await supabase.storage.from("listing-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
       image_url = signed.data?.signedUrl ?? null;
     }
@@ -65,7 +65,7 @@ function PostPage() {
       image_url,
     }).select("id").single();
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Your property is live!");
     navigate({ to: "/listings/$id", params: { id: data.id } });
   }

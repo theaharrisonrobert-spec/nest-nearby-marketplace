@@ -47,7 +47,7 @@ function Index() {
 
   function search(e: React.FormEvent) {
     e.preventDefault();
-    const r = PRICE_RANGES[range];
+    const r = PRICE_RANGES[range] ?? PRICE_RANGES[0];
     navigate({ to: "/listings", search: { q: loc || undefined, state: state || undefined, category: cat || undefined, min: r.min, max: r.max } });
   }
 

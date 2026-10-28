@@ -7,18 +7,18 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
 import { CATEGORIES, STATES } from "@/lib/listings";
 
-type S = { q?: string; state?: string; city?: string; category?: string; purpose?: string; min?: number; max?: number; sort?: string };
+type S = { q?: string | undefined; state?: string | undefined; city?: string | undefined; category?: string | undefined; purpose?: string | undefined; min?: number | undefined; max?: number | undefined; sort?: string | undefined };
 
 export const Route = createFileRoute("/listings/")({
   validateSearch: (s: Record<string, unknown>): S => ({
-    q: s.q ? String(s.q) : undefined,
-    state: s.state ? String(s.state) : undefined,
-    city: s.city ? String(s.city) : undefined,
-    category: s.category ? String(s.category) : undefined,
-    purpose: s.purpose ? String(s.purpose) : undefined,
-    min: s.min ? Number(s.min) : undefined,
-    max: s.max ? Number(s.max) : undefined,
-    sort: s.sort ? String(s.sort) : undefined,
+    q: s["q"] ? String(s["q"]) : undefined,
+    state: s["state"] ? String(s["state"]) : undefined,
+    city: s["city"] ? String(s["city"]) : undefined,
+    category: s["category"] ? String(s["category"]) : undefined,
+    purpose: s["purpose"] ? String(s["purpose"]) : undefined,
+    min: s["min"] ? Number(s["min"]) : undefined,
+    max: s["max"] ? Number(s["max"]) : undefined,
+    sort: s["sort"] ? String(s["sort"]) : undefined,
   }),
   head: () => ({
     meta: [
