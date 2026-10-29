@@ -120,7 +120,6 @@ export function SiteFooter() {
           <ul className="space-y-2 text-sm text-ink-foreground/70">
             <li><Link to="/post" className="hover:text-brand">Post a Property</Link></li>
             <li><Link to="/my-listings" className="hover:text-brand">My Listings</Link></li>
-            <li><Link to="/auth" search={{ mode: "signup" }} className="hover:text-brand">Create Account</Link></li>
           </ul>
         </div>
       </div>
