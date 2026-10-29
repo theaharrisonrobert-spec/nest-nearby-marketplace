@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,9 +23,9 @@ function PostPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null; verification_status: string } | null>(null);
   useEffect(() => {
-    supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
+    supabase.from("profiles").select("full_name, phone, verification_status").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
   }, [user.id]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -73,6 +73,27 @@ function PostPage() {
   const input = "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary";
   const label = "mb-1 block text-sm font-medium";
   const [purpose, setPurpose] = useState("rent");
+
+  if (profile && profile.verification_status !== "approved") {
+    const pending = profile.verification_status === "pending";
+    return (
+      <div className="min-h-screen bg-muted/40">
+        <SiteHeader />
+        <div className="mx-auto max-w-xl px-5 py-20 text-center">
+          <h1 className="text-3xl font-bold">{pending ? "Verification under review" : "Verification required"}</h1>
+          <p className="mt-3 text-muted-foreground">
+            {pending
+              ? "Your ID documents are being reviewed. You'll be able to post as soon as you're approved."
+              : "Before you can post a property, submit a valid ID (international passport, NIN, or driver's license) for approval."}
+          </p>
+          {!pending && (
+            <Link to="/verify" className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground">Get Verified</Link>
+          )}
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/40">
