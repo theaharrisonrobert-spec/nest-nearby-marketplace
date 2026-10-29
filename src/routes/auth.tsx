@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Logo } from "@/components/SiteHeader";
-import hero from "@/assets/hero.jpg";
+import skyscraper from "@/assets/skyscraper.jpg";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined } => {
@@ -23,6 +23,10 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
+
+async function notifyAdmin(userId: string, kind: string, message: string) {
+  await supabase.from("admin_notifications").insert({ user_id: userId, kind, message });
+}
 
 function AuthPage() {
   const { mode, next } = Route.useSearch();
@@ -46,9 +50,10 @@ function AuthPage() {
       if (error) { toast.error(error.message); return; }
       setSent(true);
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
+      if (data.user) await notifyAdmin(data.user.id, "signin", `Sign in: ${data.user.email ?? email}`);
       toast.success("Welcome back!");
       navigate({ to: next ?? "/" });
     }
@@ -58,50 +63,57 @@ function AuthPage() {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (r.error) { toast.error("Google sign-in failed"); return; }
     if (r.redirected) return;
+    const { data } = await supabase.auth.getUser();
+    if (data.user) await notifyAdmin(data.user.id, "signin", `Sign in (Google): ${data.user.email ?? ""}`);
     navigate({ to: next ?? "/" });
   }
 
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-6 py-10 sm:px-16">
-        <Logo />
-        {sent ? (
-          <div className="mt-10">
-            <h1 className="text-3xl font-bold">Check your email</h1>
-            <p className="mt-2 text-muted-foreground">We sent a confirmation link. Click it to activate your account, then sign in.</p>
-            <Link to="/auth" search={{ mode: "signin" }} onClick={() => setSent(false)} className="mt-6 inline-block text-primary">Go to sign in</Link>
-          </div>
-        ) : (
-          <>
-            <h1 className="mt-10 text-3xl font-bold">{signup ? "Create your account" : "Welcome back"}</h1>
-            <p className="mt-2 text-muted-foreground">{signup ? "Post properties at your own price and talk to renters directly." : "Sign in to post and manage your listings."}</p>
-            <button onClick={google} className="mt-6 w-full rounded-lg border border-border py-3 text-sm font-medium hover:bg-muted">Continue with Google</button>
-            <div className="my-5 text-center text-xs text-muted-foreground">or with email</div>
-            <form onSubmit={onSubmit} className="space-y-3">
-              {signup && (
-                <>
-                  <input name="name" required placeholder="Full name" className={input} />
-                  <input name="phone" required placeholder="Phone number (e.g. 0803…)" className={input} />
-                </>
-              )}
-              <input name="email" type="email" required placeholder="Email address" className={input} />
-              <input name="password" type="password" required minLength={6} placeholder="Password" className={input} />
-              <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
-                {busy ? "Please wait…" : signup ? "Sign Up" : "Sign In"}
-              </button>
-            </form>
-            <p className="mt-6 text-sm text-muted-foreground">
-              {signup ? "Already have an account? " : "New to RentReady? "}
-              <Link to="/auth" search={{ mode: signup ? "signin" : "signup", next }} className="font-medium text-primary">{signup ? "Sign in" : "Create an account"}</Link>
-            </p>
-          </>
-        )}
-      </div>
-      <div className="relative hidden lg:block">
-        <img src={hero} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-hero-overlay" />
-        <p className="absolute bottom-16 left-12 max-w-sm font-script text-5xl text-ink-foreground">Real Spaces. Real Opportunities.</p>
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <img src={skyscraper} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-ink/70" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-6 flex justify-center"><Logo light /></div>
+        <div className="rounded-2xl bg-card p-7 shadow-card sm:p-9">
+          {sent ? (
+            <div>
+              <h1 className="text-2xl font-bold">Check your email</h1>
+              <p className="mt-2 text-sm text-muted-foreground">We sent a confirmation link. Click it to activate your account, then sign in. After signing in you'll submit a valid ID (international passport, NIN, or driver's license) for approval before you can post.</p>
+              <Link to="/auth" search={{ mode: "signin" }} onClick={() => setSent(false)} className="mt-5 inline-block font-medium text-primary">Go to sign in</Link>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold">{signup ? "Create your account" : "Welcome back"}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{signup ? "Post properties at your own price and talk to renters directly." : "Sign in to post and manage your listings."}</p>
+              <button onClick={google} className="mt-5 w-full rounded-lg border border-border py-3 text-sm font-medium hover:bg-muted">Continue with Google</button>
+              <div className="my-4 text-center text-xs text-muted-foreground">or with email</div>
+              <form onSubmit={onSubmit} className="space-y-3">
+                {signup && (
+                  <>
+                    <input name="name" required placeholder="Full name" className={input} />
+                    <input name="phone" required placeholder="Phone number (e.g. 0803…)" className={input} />
+                  </>
+                )}
+                <input name="email" type="email" required placeholder="Email address" className={input} />
+                <input name="password" type="password" required minLength={6} placeholder="Password" className={input} />
+                {!signup && (
+                  <div className="text-right">
+                    <Link to="/forgot-password" className="text-xs font-medium text-primary">Forgot password?</Link>
+                  </div>
+                )}
+                <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
+                  {busy ? "Please wait…" : signup ? "Sign Up" : "Sign In"}
+                </button>
+              </form>
+              <p className="mt-5 text-center text-sm text-muted-foreground">
+                {signup ? "Already have an account? " : "New to RentReady? "}
+                <Link to="/auth" search={{ mode: signup ? "signin" : "signup", next }} className="font-medium text-primary">{signup ? "Sign in" : "Create an account"}</Link>
+              </p>
+            </>
+          )}
+        </div>
+        <p className="mt-6 text-center font-script text-2xl text-ink-foreground">Real Spaces. Real Opportunities.</p>
       </div>
     </div>
   );

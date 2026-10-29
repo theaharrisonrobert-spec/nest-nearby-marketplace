@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Home as HomeIcon, Menu, Plus, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,9 +29,15 @@ const links = [
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -56,6 +62,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           {user ? (
             <>
               <Link to="/my-listings" className="text-sm hover:text-brand">My Listings</Link>
+              <Link to="/verify" className="text-sm hover:text-brand">Get Verified</Link>
+              {isAdmin && <Link to="/admin" className="text-sm font-medium text-brand hover:opacity-80">Admin</Link>}
               <button onClick={signOut} className="rounded-lg border border-ink-foreground/60 px-4 py-2 text-sm hover:bg-ink-foreground/10">Sign Out</button>
             </>
           ) : (
@@ -74,9 +82,13 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           ))}
           <Link to="/post" onClick={() => setOpen(false)} className="block rounded-lg bg-brand py-2 text-center text-sm font-medium text-brand-foreground">+ Post a Property</Link>
           {user ? (
-            <div className="flex gap-3">
-              <Link to="/my-listings" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">My Listings</Link>
-              <button onClick={signOut} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-sm">Sign Out</button>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <Link to="/my-listings" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">My Listings</Link>
+                <Link to="/verify" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Get Verified</Link>
+                <button onClick={signOut} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-sm">Sign Out</button>
+              </div>
+              {isAdmin && <Link to="/admin" onClick={() => setOpen(false)} className="block rounded-lg border border-brand py-2 text-center text-sm text-brand">Admin Dashboard</Link>}
             </div>
           ) : (
             <div className="flex gap-3">
