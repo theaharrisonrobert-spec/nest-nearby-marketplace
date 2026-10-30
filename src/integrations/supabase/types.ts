@@ -41,6 +41,7 @@ export type Database = {
       listings: {
         Row: {
           address: string | null
+          amenities: string[]
           bathrooms: number | null
           bedrooms: number | null
           category: string
@@ -49,19 +50,26 @@ export type Database = {
           contact_phone: string
           created_at: string
           description: string | null
+          details_reviewed: boolean
           id: string
           image_url: string | null
+          is_sample: boolean
+          landmarks: string | null
           negotiable: boolean
           owner_id: string | null
           price: number
           price_period: string
           purpose: string
+          show_address: boolean
           size_sqft: number | null
+          sponsored: boolean
           state: string
+          status: string
           title: string
         }
         Insert: {
           address?: string | null
+          amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
           category: string
@@ -70,19 +78,26 @@ export type Database = {
           contact_phone: string
           created_at?: string
           description?: string | null
+          details_reviewed?: boolean
           id?: string
           image_url?: string | null
+          is_sample?: boolean
+          landmarks?: string | null
           negotiable?: boolean
           owner_id?: string | null
           price: number
           price_period?: string
           purpose?: string
+          show_address?: boolean
           size_sqft?: number | null
+          sponsored?: boolean
           state: string
+          status?: string
           title: string
         }
         Update: {
           address?: string | null
+          amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
           category?: string
@@ -91,21 +106,68 @@ export type Database = {
           contact_phone?: string
           created_at?: string
           description?: string | null
+          details_reviewed?: boolean
           id?: string
           image_url?: string | null
+          is_sample?: boolean
+          landmarks?: string | null
           negotiable?: boolean
           owner_id?: string | null
           price?: number
           price_period?: string
           purpose?: string
+          show_address?: boolean
           size_sqft?: number | null
+          sponsored?: boolean
           state?: string
+          status?: string
           title?: string
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          listing_id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          account_type: string
+          agency_name: string | null
+          agency_verified: boolean
           created_at: string
           full_name: string | null
           id: string
@@ -117,6 +179,9 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          account_type?: string
+          agency_name?: string | null
+          agency_verified?: boolean
           created_at?: string
           full_name?: string | null
           id: string
@@ -128,6 +193,9 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          account_type?: string
+          agency_name?: string | null
+          agency_verified?: boolean
           created_at?: string
           full_name?: string | null
           id?: string
@@ -139,6 +207,44 @@ export type Database = {
           verified_at?: string | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          listing_id: string
+          reason: string
+          reporter_id: string
+          resolved: boolean
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          listing_id: string
+          reason: string
+          reporter_id: string
+          resolved?: boolean
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          listing_id?: string
+          reason?: string
+          reporter_id?: string
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -158,6 +264,50 @@ export type Database = {
         }
         Relationships: []
       }
+      viewings: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          note: string | null
+          owner_id: string
+          proposed_at: string | null
+          requested_at: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          note?: string | null
+          owner_id: string
+          proposed_at?: string | null
+          requested_at: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          note?: string | null
+          owner_id?: string
+          proposed_at?: string | null
+          requested_at?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -169,6 +319,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      listing_address: { Args: { _id: string }; Returns: string }
+      owner_badges: {
+        Args: { _owner: string }
+        Returns: {
+          account_type: string
+          agency_name: string
+          agency_verified: boolean
+          identity_verified: boolean
+        }[]
       }
     }
     Enums: {

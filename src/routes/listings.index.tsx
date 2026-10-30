@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
 import { CATEGORIES, STATES } from "@/lib/listings";
+import { LISTING_COLS } from "@/lib/listings";
 
 type S = { q?: string | undefined; state?: string | undefined; city?: string | undefined; category?: string | undefined; purpose?: string | undefined; min?: number | undefined; max?: number | undefined; sort?: string | undefined };
 
@@ -42,7 +43,7 @@ function ListingsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["listings", s],
     queryFn: async () => {
-      let query = supabase.from("listings").select("*");
+      let query = supabase.from("listings").select(LISTING_COLS).order("sponsored", { ascending: false });
       if (s.state) query = query.eq("state", s.state);
       if (s.city) query = query.ilike("city", `%${s.city}%`);
       if (s.category) query = query.eq("category", s.category);

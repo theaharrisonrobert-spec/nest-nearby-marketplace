@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
 import { CATEGORIES, POPULAR_AREAS, PRICE_RANGES, STATES } from "@/lib/listings";
+import { LISTING_COLS } from "@/lib/listings";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -39,7 +40,7 @@ function Index() {
   const { data: featured } = useQuery({
     queryKey: ["featured"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false }).limit(6);
+      const { data, error } = await supabase.from("listings").select(LISTING_COLS).order("sponsored", { ascending: false }).order("created_at", { ascending: false }).limit(6);
       if (error) throw error;
       return data;
     },
