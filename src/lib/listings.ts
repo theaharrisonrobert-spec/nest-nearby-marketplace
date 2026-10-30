@@ -7,7 +7,21 @@ import warehouse from "@/assets/warehouse.jpg";
 import hall from "@/assets/hall.jpg";
 import hero from "@/assets/hero.jpg";
 
-export type Listing = Database["public"]["Tables"]["listings"]["Row"];
+type Row = Database["public"]["Tables"]["listings"]["Row"];
+export type Listing = Omit<Row, "contact_phone" | "address">;
+
+/** Public columns only — phone and exact address are never readable by visitors. */
+export const LISTING_COLS =
+  "id, owner_id, title, description, category, purpose, price, price_period, negotiable, state, city, bedrooms, bathrooms, size_sqft, image_url, contact_name, created_at, status, is_sample, sponsored, details_reviewed, landmarks, amenities, show_address";
+
+export const AMENITIES = ["Furnished", "24/7 Security", "Constant Power", "Borehole Water", "Parking Space", "Swimming Pool", "Gym", "Good Access Road", "Air Conditioning", "Fitted Kitchen"];
+
+export const ACCOUNT_TYPES = {
+  landlord: { label: "Landlord / Property Owner", short: "Landlord" },
+  agent: { label: "Real Estate Agent / Agency", short: "Agent" },
+  tenant: { label: "Buyer / Tenant", short: "Buyer / Tenant" },
+} as const;
+export type AccountType = keyof typeof ACCOUNT_TYPES;
 
 export const CATEGORIES = [
   { name: "Apartments", sub: "For Rent & Sale", img: apartment },

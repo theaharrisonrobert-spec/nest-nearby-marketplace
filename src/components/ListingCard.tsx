@@ -22,6 +22,11 @@ export function ListingCard({ l }: { l: Listing }) {
         <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
           {l.purpose === "sale" ? "For Sale" : "For Rent"}
         </span>
+        <div className="absolute bottom-2 left-2 flex gap-1">
+          {l.sponsored && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-foreground">Sponsored</span>}
+          {l.is_sample && <span className="rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-foreground">Sample listing</span>}
+          {l.status && l.status !== "approved" && <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-foreground">{l.status === "pending" ? "Awaiting review" : l.status}</span>}
+        </div>
         <button onClick={toggle} aria-label="Save" className="absolute right-2 top-2 text-ink-foreground">
           <Heart className={`h-6 w-6 drop-shadow ${fav ? "fill-destructive text-destructive" : ""}`} />
         </button>

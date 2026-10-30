@@ -1,3 +1,4 @@
+import { LISTING_COLS } from "@/lib/listings";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -25,7 +26,7 @@ function MyListings() {
   const { data, isLoading } = useQuery({
     queryKey: ["my-listings", user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("listings").select("*").eq("owner_id", user.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("listings").select(LISTING_COLS).eq("owner_id", user.id).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
