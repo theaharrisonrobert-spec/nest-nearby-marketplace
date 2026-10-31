@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Bell, Check, Eye, ShieldX, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { AdminListings } from "@/components/AdminListings";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -129,6 +130,8 @@ function AdminPage() {
             ))}
           </div>
         )}
+
+        {isAdmin && <AdminListings />}
 
         <h2 className="mt-10 flex items-center gap-2 text-xl font-bold"><Bell className="h-5 w-5" /> Activity</h2>
         <div className="mt-3 divide-y divide-border rounded-xl bg-card shadow-card">

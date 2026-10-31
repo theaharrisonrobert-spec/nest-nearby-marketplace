@@ -22,8 +22,8 @@ export function Logo({ light = false }: { light?: boolean }) {
 const links = [
   { to: "/", label: "Home", search: {} },
   { to: "/listings", label: "Properties", search: {} },
-  { to: "/listings", label: "Shops & Spaces", search: { category: "Shops" } },
-  { to: "/listings", label: "Lagos", search: { state: "Lagos" } },
+  { to: "/listings", label: "For Rent", search: { purpose: "rent" } },
+  { to: "/listings", label: "For Sale", search: { purpose: "sale" } },
   { to: "/how-it-works", label: "How It Works", search: {} },
 ] as const;
 
@@ -61,8 +61,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           </Link>
           {user ? (
             <>
-              <Link to="/my-listings" className="text-sm hover:text-brand">My Listings</Link>
-              <Link to="/verify" className="text-sm hover:text-brand">Get Verified</Link>
+              <Link to="/dashboard" className="text-sm hover:text-brand">Dashboard</Link>
+              <Link to="/messages" className="text-sm hover:text-brand">Messages</Link>
               {isAdmin && <Link to="/admin" className="text-sm font-medium text-brand hover:opacity-80">Admin</Link>}
               <button onClick={signOut} className="rounded-lg border border-ink-foreground/60 px-4 py-2 text-sm hover:bg-ink-foreground/10">Sign Out</button>
             </>
@@ -84,8 +84,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           {user ? (
             <div className="space-y-3">
               <div className="flex gap-3">
-                <Link to="/my-listings" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">My Listings</Link>
-                <Link to="/verify" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Get Verified</Link>
+                <Link to="/dashboard" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Dashboard</Link>
+                <Link to="/messages" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Messages</Link>
                 <button onClick={signOut} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-sm">Sign Out</button>
               </div>
               {isAdmin && <Link to="/admin" onClick={() => setOpen(false)} className="block rounded-lg border border-brand py-2 text-center text-sm text-brand">Admin Dashboard</Link>}
@@ -108,7 +108,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-4">
         <div>
           <Logo light />
-          <p className="mt-4 text-sm text-ink-foreground/70">Your Space. Your Choice. Your Next Move. No agents, no agency fees — talk directly to owners.</p>
+          <p className="mt-4 text-sm text-ink-foreground/70">Your Space. Your Choice. Your Next Move. Connecting Properties, People, and Opportunities.</p>
         </div>
         <div>
           <div className="mb-3 font-semibold">Explore</div>
@@ -128,10 +128,13 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <div className="mb-3 font-semibold">Owners</div>
+          <div className="mb-3 font-semibold">Support</div>
           <ul className="space-y-2 text-sm text-ink-foreground/70">
-            <li><Link to="/post" className="hover:text-brand">Post a Property</Link></li>
-            <li><Link to="/my-listings" className="hover:text-brand">My Listings</Link></li>
+            <li><Link to="/landlords" className="hover:text-brand">For Landlords & Agents</Link></li>
+            <li><Link to="/help" className="hover:text-brand">Help Centre & FAQs</Link></li>
+            <li><Link to="/contact" className="hover:text-brand">Contact Us</Link></li>
+            <li><Link to="/privacy" className="hover:text-brand">Privacy Policy</Link></li>
+            <li><Link to="/terms" className="hover:text-brand">Terms of Service</Link></li>
           </ul>
         </div>
       </div>
