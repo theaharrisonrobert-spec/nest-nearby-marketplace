@@ -12,10 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LandlordsRouteImport } from './routes/landlords'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedMyListingsRouteImport } from './routes/_authenticated/my-listings'
 import { Route as AuthenticatedPostRouteImport } from './routes/_authenticated/post'
 import { Route as AuthenticatedVerifyRouteImport } from './routes/_authenticated/verify'
@@ -36,9 +43,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -46,14 +63,39 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LandlordsRoute = LandlordsRouteImport.update({
+  id: '/landlords',
+  path: '/landlords',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMyListingsRoute = AuthenticatedMyListingsRouteImport.update({
@@ -85,10 +127,17 @@ const ListingsIdRoute = ListingsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/landlords': typeof LandlordsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/my-listings': typeof AuthenticatedMyListingsRoute
   '/post': typeof AuthenticatedPostRoute
   '/verify': typeof AuthenticatedVerifyRoute
@@ -98,10 +147,17 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/landlords': typeof LandlordsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/my-listings': typeof AuthenticatedMyListingsRoute
   '/post': typeof AuthenticatedPostRoute
   '/verify': typeof AuthenticatedVerifyRoute
@@ -113,10 +169,17 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/landlords': typeof LandlordsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/my-listings': typeof AuthenticatedMyListingsRoute
   '/_authenticated/post': typeof AuthenticatedPostRoute
   '/_authenticated/verify': typeof AuthenticatedVerifyRoute
@@ -128,10 +191,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contact'
     | '/forgot-password'
+    | '/help'
     | '/how-it-works'
+    | '/landlords'
+    | '/privacy'
     | '/reset-password'
+    | '/terms'
     | '/admin'
+    | '/dashboard'
+    | '/messages'
     | '/my-listings'
     | '/post'
     | '/verify'
@@ -141,10 +211,17 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contact'
     | '/forgot-password'
+    | '/help'
     | '/how-it-works'
+    | '/landlords'
+    | '/privacy'
     | '/reset-password'
+    | '/terms'
     | '/admin'
+    | '/dashboard'
+    | '/messages'
     | '/my-listings'
     | '/post'
     | '/verify'
@@ -155,10 +232,17 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/contact'
     | '/forgot-password'
+    | '/help'
     | '/how-it-works'
+    | '/landlords'
+    | '/privacy'
     | '/reset-password'
+    | '/terms'
     | '/_authenticated/admin'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/messages'
     | '/_authenticated/my-listings'
     | '/_authenticated/post'
     | '/_authenticated/verify'
@@ -170,9 +254,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  LandlordsRoute: typeof LandlordsRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TermsRoute: typeof TermsRoute
   ListingsIdRoute: typeof ListingsIdRoute
   ListingsIndexRoute: typeof ListingsIndexRoute
 }
@@ -200,11 +289,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -214,6 +317,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/landlords': {
+      id: '/landlords'
+      path: '/landlords'
+      fullPath: '/landlords'
+      preLoaderRoute: typeof LandlordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -221,11 +338,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/my-listings': {
@@ -268,6 +406,8 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedMyListingsRoute: typeof AuthenticatedMyListingsRoute
   AuthenticatedPostRoute: typeof AuthenticatedPostRoute
   AuthenticatedVerifyRoute: typeof AuthenticatedVerifyRoute
@@ -275,6 +415,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedMyListingsRoute: AuthenticatedMyListingsRoute,
   AuthenticatedPostRoute: AuthenticatedPostRoute,
   AuthenticatedVerifyRoute: AuthenticatedVerifyRoute,
@@ -287,9 +429,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
+  LandlordsRoute: LandlordsRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TermsRoute: TermsRoute,
   ListingsIdRoute: ListingsIdRoute,
   ListingsIndexRoute: ListingsIndexRoute,
 }

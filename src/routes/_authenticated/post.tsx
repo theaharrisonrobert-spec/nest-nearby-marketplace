@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { CATEGORIES, STATES } from "@/lib/listings";
+import { AMENITIES, CATEGORIES, STATES } from "@/lib/listings";
 
 export const Route = createFileRoute("/_authenticated/post")({
   head: () => ({
@@ -63,11 +63,16 @@ function PostPage() {
       contact_name: String(f.get("contact_name")),
       contact_phone: String(f.get("contact_phone")),
       image_url,
+      landmarks: String(f.get("landmarks") || "").slice(0, 500) || null,
+      amenities: f.getAll("amenities").map(String).filter((a) => AMENITIES.includes(a)),
+      show_address: f.get("show_address") === "on",
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Your property is live!");
-    navigate({ to: "/listings/$id", params: { id: data.id } });
+    await supabase.from("admin_notifications").insert({ user_id: user.id, kind: "listing", message: `New listing awaiting review: ${String(f.get("title"))}` });
+    toast.success("Submitted! Your property goes live once our team approves it.");
+    navigate({ to: "/dashboard" });
+    void data;
   }
 
   const input = "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary";
@@ -100,7 +105,7 @@ function PostPage() {
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-5 py-8">
         <h1 className="text-3xl font-bold">Post a Property</h1>
-        <p className="mt-1 text-muted-foreground">You set the price. Renters and buyers contact you directly — no agent.</p>
+        <p className="mt-1 text-muted-foreground">You set the price. Posting is free. Every listing is reviewed by our team before it goes live. Your phone number is never shown publicly.</p>
         <form key={profile ? "p" : "n"} onSubmit={onSubmit} className="mt-6 grid gap-4 rounded-xl bg-card p-6 shadow-card sm:grid-cols-2">
           <div className="sm:col-span-2"><label className={label}>Title</label><input name="title" required placeholder="e.g. 2 Bedroom Flat in Yaba" className={input} /></div>
           <div><label className={label}>Property type</label>
@@ -121,6 +126,10 @@ function PostPage() {
           <div><label className={label}>Bathrooms</label><input name="bathrooms" type="number" min={0} className={input} /></div>
           <div><label className={label}>Size (sqft)</label><input name="size" type="number" min={0} className={input} /></div>
           <div><label className={label}>Photo</label><input name="image" type="file" accept="image/*" className="text-sm" /></div>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" name="show_address" /> Show the street address publicly (otherwise only the area is shown)</label>
+          <div className="sm:col-span-2"><label className={label}>Amenities</label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{AMENITIES.map((a) => <label key={a} className="flex items-center gap-2 text-sm"><input type="checkbox" name="amenities" value={a} />{a}</label>)}</div></div>
+          <div className="sm:col-span-2"><label className={label}>Nearby landmarks (comma separated)</label><input name="landmarks" maxLength={500} placeholder="e.g. Lekki Toll Gate, Novare Mall" className={input} /></div>
           <div className="sm:col-span-2"><label className={label}>Description</label><textarea name="description" rows={4} placeholder="Power, water, security, parking, nearby landmarks…" className={input} /></div>
           <div><label className={label}>Contact name</label><input name="contact_name" required defaultValue={profile?.full_name ?? ""} className={input} /></div>
           <div><label className={label}>Phone / WhatsApp</label><input name="contact_phone" required defaultValue={profile?.phone ?? ""} placeholder="0803…" className={input} /></div>
