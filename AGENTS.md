@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the account-page visual shell in AuthScene and authentication actions in the auth route so presentation changes do not alter verification or sign-in behavior.
