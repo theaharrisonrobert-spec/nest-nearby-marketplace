@@ -3,10 +3,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { Logo } from "@/components/SiteHeader";
+import { AuthScene } from "@/components/AuthScene";
+import { Button } from "@/components/ui/button";
 import { ACCOUNT_TYPES, type AccountType } from "@/lib/listings";
-import { Building2, Briefcase, KeyRound } from "lucide-react";
-import skyscraper from "@/assets/skyscraper.jpg";
+import { ArrowRight, Building2, Briefcase, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRoundPlus } from "lucide-react";
+
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined } => {
@@ -35,6 +36,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const signup = mode === "signup";
   const [accountType, setAccountType] = useState<AccountType | null>(null);
 
@@ -73,12 +75,16 @@ function AuthPage() {
 
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <img src={skyscraper} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-ink/70" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex justify-center"><Logo light /></div>
-        <div className="rounded-2xl bg-card p-7 shadow-card sm:p-9">
+    <AuthScene>
+        <div className="grid grid-cols-2 border-b border-border" aria-label="Account options">
+          <Button asChild variant="ghost" className={`h-14 rounded-none border-b-2 text-base ${!signup ? "border-primary text-primary" : "border-transparent bg-muted/50"}`}>
+            <Link to="/auth" search={{ mode: "signin", next }} onClick={() => setSent(false)}><LockKeyhole /> Login</Link>
+          </Button>
+          <Button asChild variant="ghost" className={`h-14 rounded-none border-b-2 text-base ${signup ? "border-primary text-primary" : "border-transparent bg-muted/50"}`}>
+            <Link to="/auth" search={{ mode: "signup", next }} onClick={() => setSent(false)}><UserRoundPlus /> Sign Up</Link>
+          </Button>
+        </div>
+        <div className="p-6 sm:p-8">
           {sent ? (
             <div>
               <h1 className="text-2xl font-bold">Check your email</h1>
@@ -96,23 +102,23 @@ function AuthPage() {
                   ["agent", Briefcase, "List properties for clients as an agent or agency."],
                   ["tenant", KeyRound, "Find a home, shop or space to rent or buy."],
                 ] as const).map(([k, Icon, d]) => (
-                  <button key={k} onClick={() => setAccountType(k)} className="flex w-full items-center gap-4 rounded-xl border border-border p-4 text-left transition hover:border-primary hover:bg-brand-soft">
+                  <Button variant="outline" key={k} onClick={() => setAccountType(k)} className="h-auto w-full justify-start gap-4 whitespace-normal p-4 text-left hover:border-primary hover:bg-brand-soft">
                     <Icon className="h-7 w-7 shrink-0 text-primary" />
                     <span><span className="block font-semibold">{ACCOUNT_TYPES[k].label}</span><span className="text-xs text-muted-foreground">{d}</span></span>
-                  </button>
+                  </Button>
                 ))}
               </div>
+              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or continue with<span className="h-px flex-1 bg-border" /></div>
+              <Button onClick={google} variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
               <p className="mt-5 text-center text-sm text-muted-foreground">Already have an account? <Link to="/auth" search={{ mode: "signin", next }} className="font-medium text-primary">Sign in</Link></p>
             </div>
           ) : (
             <>
               {signup && accountType && (
-                <button onClick={() => setAccountType(null)} className="mb-3 rounded-full bg-brand-soft px-3 py-1 text-xs font-medium text-primary">{ACCOUNT_TYPES[accountType].label} · change</button>
+                <Button variant="secondary" size="sm" onClick={() => setAccountType(null)} className="mb-3 text-primary">{ACCOUNT_TYPES[accountType].label} · change</Button>
               )}
-              <h1 className="text-2xl font-bold">{signup ? "Create your account" : "Welcome back"}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{signup ? "Post properties at your own price and talk to renters directly." : "Sign in to post and manage your listings."}</p>
-              <button onClick={google} className="mt-5 w-full rounded-lg border border-border py-3 text-sm font-medium hover:bg-muted">Continue with Google</button>
-              <div className="my-4 text-center text-xs text-muted-foreground">or with email</div>
+              <h2 className="text-center text-3xl font-bold">{signup ? "Create your account" : "Welcome Back!"}</h2>
+              <p className="mb-6 mt-1 text-center text-muted-foreground">{signup ? "Your next move starts here." : "Sign in to access your account"}</p>
               <form onSubmit={onSubmit} className="space-y-3">
                 {signup && (
                   <>
@@ -121,18 +127,27 @@ function AuthPage() {
                     {accountType === "agent" && <input name="agency" required placeholder="Agency / business name" className={input} />}
                   </>
                 )}
-                <input name="email" type="email" required placeholder="Email address" className={input} />
-                <input name="password" type="password" required minLength={6} placeholder="Password" className={input} />
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
+                  <input name="email" aria-label="Email address" autoComplete="email" type="email" required placeholder="Email address" className={`${input} pl-12`} />
+                </div>
+                <div className="relative">
+                  <LockKeyhole className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
+                  <input name="password" aria-label="Password" autoComplete={signup ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} required minLength={6} placeholder="Enter your password" className={`${input} pl-12 pr-12`} />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1.5 text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff /> : <Eye />}</Button>
+                </div>
                 {!signup && (
                   <div className="text-right">
                     <Link to="/forgot-password" className="text-xs font-medium text-primary">Forgot password?</Link>
                   </div>
                 )}
-                <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
-                  {busy ? "Please wait…" : signup ? "Sign Up" : "Sign In"}
-                </button>
+                <Button type="submit" disabled={busy} className="h-12 w-full text-base font-semibold">
+                  {busy ? "Please wait…" : signup ? "Sign Up" : "Log In"} <ArrowRight />
+                </Button>
               </form>
               {signup && <p className="mt-3 text-xs text-muted-foreground">We confirm your email first. Landlords and agents then submit an ID before publishing. See our <Link to="/privacy" className="underline">privacy policy</Link> and <Link to="/terms" className="underline">terms</Link>.</p>}
+              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or continue with<span className="h-px flex-1 bg-border" /></div>
+              <Button onClick={google} variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
               <p className="mt-5 text-center text-sm text-muted-foreground">
                 {signup ? "Already have an account? " : "New to RentReady? "}
                 <Link to="/auth" search={{ mode: signup ? "signin" : "signup", next }} className="font-medium text-primary">{signup ? "Sign in" : "Create an account"}</Link>
@@ -140,8 +155,6 @@ function AuthPage() {
             </>
           )}
         </div>
-        <p className="mt-6 text-center font-script text-2xl text-ink-foreground">Real Spaces. Real Opportunities.</p>
-      </div>
-    </div>
+    </AuthScene>
   );
 }
