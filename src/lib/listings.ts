@@ -1,6 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 import apartment from "@/assets/apartment.jpg";
 import shop from "@/assets/shop.jpg";
+import mall from "@/assets/mall.jpg";
 import office from "@/assets/office.jpg";
 import land from "@/assets/land.jpg";
 import warehouse from "@/assets/warehouse.jpg";
@@ -27,6 +28,7 @@ export const CATEGORIES = [
   { name: "Apartments", sub: "For Rent & Sale", img: apartment },
   { name: "Houses", sub: "Duplexes & bungalows", img: hero },
   { name: "Shops", sub: "For Rent & Sale", img: shop },
+  { name: "Malls", sub: "Mall units & plazas", img: mall },
   { name: "Office Spaces", sub: "For Rent & Sale", img: office },
   { name: "Event Halls", sub: "For Rent", img: hall },
   { name: "Land", sub: "For Sale & Lease", img: land },
