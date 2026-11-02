@@ -1,67 +1,88 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { CATEGORIES, PRICE_RANGES, STATES } from "@/lib/listings";
+import { CATEGORIES, POPULAR_AREAS, STATES } from "@/lib/listings";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "RentReady — Find a Place in Lagos & Nigeria Without an Agent" },
-      { name: "description", content: "Rent or buy apartments, houses, shops, offices, event halls and land across Lagos, Abuja and Nigeria. Talk to owners directly. Owners post at their own price." },
-      { property: "og:title", content: "RentReady — Discover. Connect. Secure Your Space." },
-      { property: "og:description", content: "No agent needed. Find and post properties across Nigeria." },
+      { title: "RentReady — Rent, Buy & List Property Across Nigeria" },
+      { name: "description", content: "Find apartments, houses, shops, malls, office spaces, land and other spaces for rent or sale in Lagos, Abuja and every Nigerian state." },
+      { property: "og:title", content: "RentReady — Rentals. Homes. Shops. Land." },
+      { property: "og:description", content: "Search every state and area in Nigeria. Talk to owners directly." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
 
+const AREA_OPTIONS = [
+  ...POPULAR_AREAS.filter((a) => a.city).map((a) => `${a.city}, ${a.state}`),
+  ...STATES,
+];
+
 function Index() {
   const navigate = useNavigate();
-  const [loc, setLoc] = useState("");
-  const [state, setState] = useState("");
-  const [cat, setCat] = useState("");
-  const [range, setRange] = useState(0);
+  const [q, setQ] = useState("");
 
   function search(e: React.FormEvent) {
     e.preventDefault();
-    const r = PRICE_RANGES[range] ?? PRICE_RANGES[0];
-    navigate({ to: "/listings", search: { q: loc || undefined, state: state || undefined, category: cat || undefined, min: r.min, max: r.max } });
+    const v = q.trim();
+    const [city = "", st] = v.split(",").map((s) => s.trim());
+    const stateMatch = STATES.find((s) => s.toLowerCase() === (st ?? city).toLowerCase());
+    if (!v) void navigate({ to: "/listings" });
+    else if (st && stateMatch) void navigate({ to: "/listings", search: { state: stateMatch, city } });
+    else if (stateMatch) void navigate({ to: "/listings", search: { state: stateMatch } });
+    else void navigate({ to: "/listings", search: { q: v } });
   }
 
-  const field = "w-full bg-transparent text-sm outline-none";
+  const cards = [
+    { title: "Rent a home", text: "Apartments, flats and houses for rent — talk straight to the owner, no agency fee.", cta: "Find rentals", to: { to: "/listings" as const, search: { purpose: "rent" } } },
+    { title: "Buy a home", text: "Browse houses and apartments for sale across Lagos, Abuja and every state.", cta: "Browse homes for sale", to: { to: "/listings" as const, search: { purpose: "sale" } } },
+    { title: "List your property", text: "Posting is free. Set your own price, get approved and reach serious tenants and buyers.", cta: "Post a property", to: { to: "/post" as const, search: {} } },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <section className="relative flex flex-1 flex-col overflow-hidden bg-ink text-ink-foreground">
-        <img src={hero} alt="Modern apartment building in Lagos at dusk" width={1600} height={912} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-hero-overlay" />
+      <section className="relative overflow-hidden bg-ink text-ink-foreground">
+        <img src={hero} alt="Modern apartment building in Lagos" width={1600} height={912} className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-ink/40" />
         <SiteHeader overlay />
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-5 pb-16 pt-12 lg:pt-20">
-          <h1 className="max-w-2xl text-4xl font-bold leading-tight md:text-6xl">
-            Find your next space in <span className="text-brand">Lagos & across Nigeria</span>
-          </h1>
-          <p className="mt-5 max-w-lg text-base text-ink-foreground/85 md:text-lg">
-            Apartments, houses, shops, offices, event halls and land — talk straight to the owner. No agent, no agency fee.
-          </p>
-          <p className="pointer-events-none absolute right-8 top-24 hidden -rotate-6 font-script text-5xl text-ink-foreground/90 xl:block">Your Space. Your Choice.</p>
-
-          <form onSubmit={search} className="mt-10 grid max-w-5xl gap-3 rounded-2xl bg-card p-3 text-card-foreground shadow-card md:grid-cols-[1.2fr_1fr_1fr_1fr_auto]">
-            <label className="flex items-center gap-3 rounded-xl border border-border px-4 py-2">
-              <MapPin className="h-5 w-5 text-brand" />
-              <span className="flex-1"><span className="block text-xs font-medium">Area</span>
-                <input value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="e.g. Lekki, Yaba, Wuse" className={field} /></span>
-            </label>
-            <label className="rounded-xl border border-border px-4 py-2"><span className="block text-xs font-medium">State</span>
-              <select value={state} onChange={(e) => setState(e.target.value)} className={field}><option value="">All Nigeria</option>{STATES.map((s) => <option key={s}>{s}</option>)}</select></label>
-            <label className="rounded-xl border border-border px-4 py-2"><span className="block text-xs font-medium">Property Type</span>
-              <select value={cat} onChange={(e) => setCat(e.target.value)} className={field}><option value="">All Types</option>{CATEGORIES.map((c) => <option key={c.name}>{c.name}</option>)}</select></label>
-            <label className="rounded-xl border border-border px-4 py-2"><span className="block text-xs font-medium">Price Range</span>
-              <select value={range} onChange={(e) => setRange(Number(e.target.value))} className={field}>{PRICE_RANGES.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}</select></label>
-            <button type="submit" className="flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 font-medium text-primary-foreground hover:opacity-90"><Search className="h-4 w-4" /> Search</button>
+        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-20 pt-12 text-center md:pb-28 md:pt-20">
+          <h1 className="text-4xl font-bold leading-tight drop-shadow md:text-6xl">Rentals. Homes.<br />Shops. Land.</h1>
+          <form onSubmit={search} className="mt-8 flex w-full items-center rounded-xl bg-card px-5 py-1 text-card-foreground shadow-card">
+            <input list="rr-areas" value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" className="w-full bg-transparent py-3 text-base outline-none" />
+            <datalist id="rr-areas">{AREA_OPTIONS.map((a) => <option key={a} value={a} />)}</datalist>
+            <button type="submit" aria-label="Search"><Search className="h-6 w-6" /></button>
           </form>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-5 py-12">
+        <h2 className="text-center text-2xl font-bold md:text-3xl">What are you looking for?</h2>
+        <p className="mt-2 text-center text-muted-foreground">Every kind of space, in every state.</p>
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {CATEGORIES.map((c) => (
+            <Link key={c.name} to="/listings" search={{ category: c.name }} className="overflow-hidden rounded-2xl border border-border bg-card shadow-card transition hover:-translate-y-1">
+              <img src={c.img} alt={c.name} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+              <div className="p-3"><div className="font-semibold">{c.name}</div><div className="text-xs text-muted-foreground">{c.sub}</div></div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-muted/50 px-5 py-12">
+        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+          {cards.map((c) => (
+            <div key={c.title} className="flex flex-col items-center rounded-3xl border border-border bg-card p-8 text-center shadow-card">
+              <h3 className="text-2xl font-bold">{c.title}</h3>
+              <p className="mt-3 flex-1 text-muted-foreground">{c.text}</p>
+              <Link {...c.to} className="mt-6 rounded-xl border-2 border-primary px-6 py-3 font-semibold text-primary hover:bg-primary hover:text-primary-foreground">{c.cta}</Link>
+            </div>
+          ))}
         </div>
       </section>
       <SiteFooter />
