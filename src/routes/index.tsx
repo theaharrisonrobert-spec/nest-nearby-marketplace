@@ -31,12 +31,12 @@ function Index() {
   function search(e: React.FormEvent) {
     e.preventDefault();
     const v = q.trim();
-    if (!v) return navigate({ to: "/listings" });
-    const [city, st] = v.split(",").map((s) => s.trim());
+    const [city = "", st] = v.split(",").map((s) => s.trim());
     const stateMatch = STATES.find((s) => s.toLowerCase() === (st ?? city).toLowerCase());
-    if (st && stateMatch) return navigate({ to: "/listings", search: { state: stateMatch, city } });
-    if (stateMatch) return navigate({ to: "/listings", search: { state: stateMatch } });
-    navigate({ to: "/listings", search: { q: v } });
+    if (!v) void navigate({ to: "/listings" });
+    else if (st && stateMatch) void navigate({ to: "/listings", search: { state: stateMatch, city } });
+    else if (stateMatch) void navigate({ to: "/listings", search: { state: stateMatch } });
+    else void navigate({ to: "/listings", search: { q: v } });
   }
 
   const cards = [
