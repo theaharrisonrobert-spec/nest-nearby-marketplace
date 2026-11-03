@@ -41,7 +41,7 @@ export function AuthScene({ children }: { children: ReactNode }) {
             </div>
             <div className="mt-10 hidden items-center gap-4 border-l-4 border-auth-highlight bg-ink/85 px-5 py-5 lg:flex">
               <Building2 className="h-10 w-10 shrink-0 text-auth-highlight" />
-              <div><h2 className="text-lg font-semibold">For Landlords & Agents</h2><p className="mt-1 text-sm text-ink-foreground/80">List your properties. Make your next connection.</p></div>
+              <div><h2 className="text-lg font-semibold">For Landlords</h2><p className="mt-1 text-sm text-ink-foreground/80">List your properties. Make your next connection.</p></div>
               <Button asChild variant="outline" className="ml-auto border-ink-foreground bg-transparent text-ink-foreground hover:bg-ink-foreground/10 hover:text-ink-foreground"><Link to="/post">List Your Property <ArrowRight /></Link></Button>
             </div>
           </section>

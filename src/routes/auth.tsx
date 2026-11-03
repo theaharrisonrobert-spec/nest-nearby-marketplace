@@ -1,18 +1,19 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { AuthScene } from "@/components/AuthScene";
 import { Button } from "@/components/ui/button";
+import { accountType as normalizeAccountType } from "@/lib/marketplace-rules";
 import { ACCOUNT_TYPES, type AccountType } from "@/lib/listings";
-import { ArrowRight, Building2, Briefcase, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRoundPlus } from "lucide-react";
+import { ArrowRight, Building2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRoundPlus } from "lucide-react";
 
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined } => {
+  validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined; type?: AccountType } => {
     const n = s["next"];
-    return { mode: s["mode"] === "signup" ? "signup" : "signin", next: typeof n === "string" && n.startsWith("/") ? n : undefined };
+    return { mode: s["mode"] === "signup" ? "signup" : "signin", next: typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : undefined, type: s["type"] === "landlord" || s["type"] === "tenant" ? s["type"] : undefined };
   },
   head: () => ({
     meta: [
@@ -32,13 +33,15 @@ async function notifyAdmin(userId: string, kind: string, message: string) {
 }
 
 function AuthPage() {
-  const { mode, next } = Route.useSearch();
+  const { mode, next, type: selectedType } = Route.useSearch();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const signup = mode === "signup";
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [accountType, setAccountType] = useState<AccountType | null>(selectedType ?? null);
+
+  useEffect(() => { setAccountType(selectedType ?? null); }, [selectedType]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,9 +50,10 @@ function AuthPage() {
     const password = String(f.get("password"));
     setBusy(true);
     if (signup) {
+      if (!accountType) { setBusy(false); return; }
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: window.location.origin, data: { full_name: f.get("name"), phone: f.get("phone"), account_type: accountType ?? "tenant", agency_name: f.get("agency") || null } },
+        options: { emailRedirectTo: window.location.origin, data: { full_name: f.get("name"), phone: f.get("phone"), account_type: accountType ?? "tenant" } },
       });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
@@ -65,11 +69,21 @@ function AuthPage() {
   }
 
   async function google() {
+    if (signup && !accountType) { toast.error("Choose Landlord or Buyer / Tenant first"); return; }
+    if (signup && accountType) sessionStorage.setItem("rr-signup-type", accountType);
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (r.error) { toast.error("Google sign-in failed"); return; }
     if (r.redirected) return;
     const { data } = await supabase.auth.getUser();
-    if (data.user) await notifyAdmin(data.user.id, "signin", `Sign in (Google): ${data.user.email ?? ""}`);
+    if (data.user) {
+      const selected = sessionStorage.getItem("rr-signup-type");
+      if (selected) {
+        const { error } = await supabase.from("profiles").update({ account_type: normalizeAccountType(selected) }).eq("id", data.user.id);
+        if (error) { toast.error(error.message); return; }
+        sessionStorage.removeItem("rr-signup-type");
+      }
+      await notifyAdmin(data.user.id, "signin", `Sign in (Google): ${data.user.email ?? ""}`);
+    }
     navigate({ to: next ?? "/" });
   }
 
@@ -94,12 +108,11 @@ function AuthPage() {
           ) : signup && !accountType ? (
             <div>
               <h1 className="text-2xl font-bold">Welcome to RentReady</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Join a trusted community for property rentals, sales, and investments.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Choose the account that fits your next move.</p>
               <p className="mt-5 text-sm font-semibold">How would you like to use RentReady?</p>
               <div className="mt-3 space-y-3">
                 {([
                   ["landlord", Building2, "List and manage your own properties."],
-                  ["agent", Briefcase, "List properties for clients as an agent or agency."],
                   ["tenant", KeyRound, "Find a home, shop or space to rent or buy."],
                 ] as const).map(([k, Icon, d]) => (
                   <Button variant="outline" key={k} onClick={() => setAccountType(k)} className="h-auto w-full justify-start gap-4 whitespace-normal p-4 text-left hover:border-primary hover:bg-brand-soft">
@@ -117,14 +130,13 @@ function AuthPage() {
               {signup && accountType && (
                 <Button variant="secondary" size="sm" onClick={() => setAccountType(null)} className="mb-3 text-primary">{ACCOUNT_TYPES[accountType].label} · change</Button>
               )}
-              <h2 className="text-center text-3xl font-bold">{signup ? "Create your account" : "Welcome Back!"}</h2>
+              <h2 className="text-center text-3xl font-bold">{signup ? accountType === "landlord" ? "Landlord sign up" : "Buyer / Tenant sign up" : "Welcome Back!"}</h2>
               <p className="mb-6 mt-1 text-center text-muted-foreground">{signup ? "Your next move starts here." : "Sign in to access your account"}</p>
               <form onSubmit={onSubmit} className="space-y-3">
                 {signup && (
                   <>
                     <input name="name" required placeholder="Full name" className={input} />
                     <input name="phone" required placeholder="Phone number (e.g. 0803…)" className={input} />
-                    {accountType === "agent" && <input name="agency" required placeholder="Agency / business name" className={input} />}
                   </>
                 )}
                 <div className="relative">
@@ -145,7 +157,7 @@ function AuthPage() {
                   {busy ? "Please wait…" : signup ? "Sign Up" : "Log In"} <ArrowRight />
                 </Button>
               </form>
-              {signup && <p className="mt-3 text-xs text-muted-foreground">We confirm your email first. Landlords and agents then submit an ID before publishing. See our <Link to="/privacy" className="underline">privacy policy</Link> and <Link to="/terms" className="underline">terms</Link>.</p>}
+              {signup && <p className="mt-3 text-xs text-muted-foreground">We confirm your email first. Landlords then submit an ID before publishing. See our <Link to="/privacy" className="underline">privacy policy</Link> and <Link to="/terms" className="underline">terms</Link>.</p>}
               <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or continue with<span className="h-px flex-1 bg-border" /></div>
               <Button onClick={google} variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
               <p className="mt-5 text-center text-sm text-muted-foreground">
