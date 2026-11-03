@@ -59,6 +59,7 @@ export type Database = {
           owner_id: string | null
           price: number
           price_period: string
+          promotion_requested: boolean
           purpose: string
           show_address: boolean
           size_sqft: number | null
@@ -87,6 +88,7 @@ export type Database = {
           owner_id?: string | null
           price: number
           price_period?: string
+          promotion_requested?: boolean
           purpose?: string
           show_address?: boolean
           size_sqft?: number | null
@@ -115,6 +117,7 @@ export type Database = {
           owner_id?: string | null
           price?: number
           price_period?: string
+          promotion_requested?: boolean
           purpose?: string
           show_address?: boolean
           size_sqft?: number | null
