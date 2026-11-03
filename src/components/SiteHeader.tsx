@@ -1,105 +1,80 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home as HomeIcon, Menu, Plus, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { BadgeCheck, ChevronDown, Home as HomeIcon, Menu, User, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { Button } from "@/components/ui/button";
+import { CATEGORIES } from "@/lib/listings";
 
 export function Logo({ light = false }: { light?: boolean }) {
-  return (
-    <Link to="/" className="flex items-center gap-2">
-      <HomeIcon className="h-8 w-8 text-brand" strokeWidth={2.5} />
-      <div className="leading-none">
-        <div className={`font-display text-2xl font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>
-          Rent<span className="text-brand">Ready</span>
-        </div>
-        <div className={`text-[11px] ${light ? "text-ink-foreground/70" : "text-muted-foreground"}`}>Find. Rent. Buy. Grow.</div>
-      </div>
-    </Link>
-  );
+  return <Link to="/" className="flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" strokeWidth={2.5} /><span className={`font-display text-2xl font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>Rent<span className="text-primary">Ready</span></span></Link>;
 }
-
-const links = [
-  { to: "/", label: "Home", search: {} },
-  { to: "/listings", label: "Properties", search: {} },
-  { to: "/listings", label: "For Rent", search: { purpose: "rent" } },
-  { to: "/listings", label: "For Sale", search: { purpose: "sale" } },
-  { to: "/how-it-works", label: "How It Works", search: {} },
-] as const;
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [account, setAccount] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
   const qc = useQueryClient();
-
+  const { data: profile } = useQuery({
+    queryKey: ["account-menu-profile", user?.id], enabled: !!user,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase.from("profiles").select("full_name, account_type, verification_status").eq("id", user.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const { data: isAdmin } = useQuery({
+    queryKey: ["account-menu-admin", user?.id], enabled: !!user,
+    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data : false,
+  });
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => setIsAdmin(!!data));
-  }, [user]);
-
+    if (!open && !account) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); setAccount(false); } };
+    window.addEventListener("keydown", close);
+    return () => { document.body.style.overflow = previous; window.removeEventListener("keydown", close); };
+  }, [open, account]);
   async function signOut() {
-    await qc.cancelQueries();
+    setAccount(false); setOpen(false);
+    await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/", replace: true });
+    await navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
   }
-
-  const base = overlay ? "bg-ink/60 backdrop-blur border-ink-foreground/10" : "bg-ink border-ink-foreground/10";
-  return (
-    <header className={`relative z-20 border-b text-ink-foreground ${base}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
-        <Logo light />
-        <nav className="hidden gap-7 text-sm lg:flex">
-          {links.map((l) => (
-            <Link key={l.label} to={l.to} search={l.search as never} className="text-ink-foreground/85 hover:text-brand">{l.label}</Link>
-          ))}
-        </nav>
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link to="/post" className="flex items-center gap-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:opacity-90">
-            <Plus className="h-4 w-4" /> Post a Property
-          </Link>
-          {user ? (
-            <>
-              <Link to="/dashboard" className="text-sm hover:text-brand">Dashboard</Link>
-              <Link to="/messages" className="text-sm hover:text-brand">Messages</Link>
-              {isAdmin && <Link to="/admin" className="text-sm font-medium text-brand hover:opacity-80">Admin</Link>}
-              <button onClick={signOut} className="rounded-lg border border-ink-foreground/60 px-4 py-2 text-sm hover:bg-ink-foreground/10">Sign Out</button>
-            </>
-          ) : (
-            <>
-              <Link to="/auth" search={{ mode: "signin" }} className="rounded-lg border border-ink-foreground/60 px-4 py-2 text-sm hover:bg-ink-foreground/10">Sign In</Link>
-              <Link to="/auth" search={{ mode: "signup" }} className="rounded-lg border border-brand px-4 py-2 text-sm text-brand hover:bg-brand/10">Sign Up</Link>
-            </>
-          )}
-        </div>
-        <button className="lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
+  const close = () => { setOpen(false); setAccount(false); };
+  return <>
+    <header className={`relative z-40 border-b border-border ${overlay ? "bg-transparent text-ink-foreground" : "bg-card text-card-foreground"}`}>
+      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5">
+        <Button variant="ghost" size="icon" className="justify-self-start" aria-label="Open menu" onClick={() => { setOpen(true); setAccount(false); }}><Menu /></Button>
+        <Logo light={overlay} />
+        {user ? <Button variant="ghost" size="icon" className="justify-self-end rounded-full bg-primary text-primary-foreground hover:bg-primary/90" aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={`justify-self-end px-0 ${overlay ? "text-ink-foreground" : "text-primary"}`}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
       </div>
-      {open && (
-        <div className="space-y-3 px-5 pb-5 lg:hidden">
-          {links.map((l) => (
-            <Link key={l.label} to={l.to} search={l.search as never} onClick={() => setOpen(false)} className="block text-ink-foreground/90">{l.label}</Link>
-          ))}
-          <Link to="/post" onClick={() => setOpen(false)} className="block rounded-lg bg-brand py-2 text-center text-sm font-medium text-brand-foreground">+ Post a Property</Link>
-          {user ? (
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                <Link to="/dashboard" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Dashboard</Link>
-                <Link to="/messages" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Messages</Link>
-                <button onClick={signOut} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-sm">Sign Out</button>
-              </div>
-              {isAdmin && <Link to="/admin" onClick={() => setOpen(false)} className="block rounded-lg border border-brand py-2 text-center text-sm text-brand">Admin Dashboard</Link>}
-            </div>
-          ) : (
-            <div className="flex gap-3">
-              <Link to="/auth" search={{ mode: "signin" }} onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-ink-foreground/60 py-2 text-center text-sm">Sign In</Link>
-              <Link to="/auth" search={{ mode: "signup" }} onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-brand py-2 text-center text-sm text-brand">Sign Up</Link>
-            </div>
-          )}
-        </div>
-      )}
     </header>
-  );
+    {open && <div role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-50 overflow-y-auto bg-background text-foreground">
+      <div className="grid h-20 grid-cols-[1fr_auto_1fr] items-center border-b border-border px-5"><Button variant="outline" size="icon" aria-label="Close menu" onClick={close}><X /></Button><Logo /><span /></div>
+      <nav className="mx-auto max-w-4xl" aria-label="Property navigation">
+        {([['Buy', 'sale'], ['Rent', 'rent']] as const).map(([label, purpose]) => <details key={label} className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">{label}<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2"><Link to="/listings" search={{ purpose }} onClick={close}>All {purpose === 'sale' ? 'for sale' : 'rentals'}</Link>{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ purpose, category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>)}
+        <details className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">Property types<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2">{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>
+        <Link to="/post" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">List your property</Link>
+        <Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Manage listings & promotions</Link>
+        <Link to="/how-it-works" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">How it works</Link>
+        <Link to="/help" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Get help</Link>
+        {!user && <div className="grid gap-4 px-6 py-6"><Link to="/auth" search={{ mode: "signup", type: "landlord" }} onClick={close}>Landlord sign up</Link><Link to="/auth" search={{ mode: "signup", type: "tenant" }} onClick={close}>Buyer / Tenant sign up</Link></div>}
+      </nav>
+    </div>}
+    {account && user && <div className="fixed inset-0 z-50 bg-ink/30" onClick={close}><section role="dialog" aria-modal="true" aria-label="Account menu" onClick={e => e.stopPropagation()} className="absolute inset-x-0 top-20 mx-auto max-w-lg rounded-lg bg-card px-5 py-4 text-card-foreground shadow-card">
+      <div className="flex items-center justify-between border-b border-border pb-3"><div><p className="font-semibold">{profile?.full_name || "My account"}</p>{profile?.verification_status === "approved" && <span className="mt-1 flex items-center gap-1 text-sm text-primary"><BadgeCheck className="h-4 w-4" />Verified identity</span>}</div><Button variant="ghost" size="icon" aria-label="Close account menu" onClick={close}><X /></Button></div>
+      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Your dashboard</Link>
+      {profile?.account_type === "landlord" && <><Link to="/my-listings" onClick={close} className="block py-4 text-lg font-semibold">Your listings</Link><Link to="/dashboard" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Promote your listing</Link></>}
+      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Tours & viewings</Link><Link to="/messages" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Inbox</Link>
+      <Link to="/verify" onClick={close} className="block py-4 text-lg font-semibold">{profile?.verification_status === "approved" ? "Identity verified" : "Identity verification"}</Link>
+      {isAdmin && <Link to="/admin" onClick={close} className="block py-4 text-lg font-semibold">Admin dashboard</Link>}
+      <Button variant="ghost" onClick={signOut} className="h-14 w-full justify-start border-t border-border px-0 text-lg font-semibold">Sign out</Button>
+    </section></div>}
+  </>;
 }
 
 export function SiteFooter() {
@@ -130,7 +105,7 @@ export function SiteFooter() {
         <div>
           <div className="mb-3 font-semibold">Support</div>
           <ul className="space-y-2 text-sm text-ink-foreground/70">
-            <li><Link to="/landlords" className="hover:text-brand">For Landlords & Agents</Link></li>
+            <li><Link to="/landlords" className="hover:text-brand">For Landlords</Link></li>
             <li><Link to="/help" className="hover:text-brand">Help Centre & FAQs</Link></li>
             <li><Link to="/contact" className="hover:text-brand">Contact Us</Link></li>
             <li><Link to="/privacy" className="hover:text-brand">Privacy Policy</Link></li>

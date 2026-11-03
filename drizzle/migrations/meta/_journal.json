@@ -22,6 +22,20 @@
       "when": 1793350980904,
       "tag": "0002_marketplace_pro",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793689182100,
+      "tag": "0003_landlord_accounts_and_promotion_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793689217232,
+      "tag": "0004_preserve_listing_status_on_promotion_request",
+      "breakpoints": true
     }
   ]
 }
