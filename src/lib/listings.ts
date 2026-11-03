@@ -19,7 +19,6 @@ export const AMENITIES = ["Furnished", "24/7 Security", "Constant Power", "Boreh
 
 export const ACCOUNT_TYPES = {
   landlord: { label: "Landlord / Property Owner", short: "Landlord" },
-  agent: { label: "Real Estate Agent / Agency", short: "Agent" },
   tenant: { label: "Buyer / Tenant", short: "Buyer / Tenant" },
 } as const;
 export type AccountType = keyof typeof ACCOUNT_TYPES;

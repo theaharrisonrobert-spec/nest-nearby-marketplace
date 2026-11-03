@@ -10,3 +10,6 @@
 <!-- LOVABLE:END -->
 
 - Keep the account-page visual shell in AuthScene and authentication actions in the auth route so presentation changes do not alter verification or sign-in behavior.
+- Reuse SiteHeader for shared navigation and account menus to keep session and verification indicators consistent across pages.
+- Keep registration, category, publishing and promotion eligibility in marketplace-rules with concrete tests; enforce ownership and publishing eligibility in database policies too.
+- Promotion requests are owner-scoped listing flags reviewed by admins; sponsorship is activated manually only after payment is confirmed, because checkout pricing is not configured.
