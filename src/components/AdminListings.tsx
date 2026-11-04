@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNaira, LISTING_COLS } from "@/lib/listings";
+import { Button } from "@/components/ui/button";
 
 export function AdminListings() {
   const qc = useQueryClient();
@@ -18,13 +19,22 @@ export function AdminListings() {
     queryKey: ["admin-reports"],
     queryFn: async () => (await supabase.from("reports").select("*, listings(title)").eq("resolved", false).order("created_at", { ascending: false })).data ?? [],
   });
+  const { data: promotions = [] } = useQuery({
+    queryKey: ["admin-promotions"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listings").select(LISTING_COLS).eq("promotion_requested", true).eq("status", "approved").eq("sponsored", false);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  async function update(id: string, patch: { status?: string; details_reviewed?: boolean; sponsored?: boolean }) {
+  async function update(id: string, patch: { status?: string; details_reviewed?: boolean; sponsored?: boolean; promotion_requested?: boolean }) {
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Listing updated");
     qc.invalidateQueries({ queryKey: ["admin-pending-listings"] });
     qc.invalidateQueries({ queryKey: ["admin-live-listings"] });
+    qc.invalidateQueries({ queryKey: ["admin-promotions"] });
   }
   async function resolve(id: string) {
     await supabase.from("reports").update({ resolved: true }).eq("id", id);
@@ -34,6 +44,12 @@ export function AdminListings() {
   const btn = "rounded-lg px-3 py-1.5 text-xs font-medium";
   return (
     <>
+      <h2 className="mt-10 text-xl font-bold">Promotion requests ({promotions.length})</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Agree pricing and confirm payment privately before activating sponsorship.</p>
+      <div className="mt-3 divide-y divide-border bg-card">
+        {!promotions.length && <p className="p-5 text-sm text-muted-foreground">No promotion requests yet.</p>}
+        {promotions.map(l => <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 p-5"><Link to="/listings/$id" params={{ id: l.id }} className="font-medium">{l.title}</Link><div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => { if (window.confirm("Has payment been confirmed for this promotion?")) void update(l.id, { sponsored: true, promotion_requested: false }); }}>Payment confirmed · Activate</Button><Button size="sm" variant="outline" onClick={() => update(l.id, { promotion_requested: false })}>Decline</Button></div></div>)}
+      </div>
       <h2 className="mt-10 text-xl font-bold">Listings awaiting approval ({pending.length})</h2>
       <div className="mt-3 divide-y divide-border rounded-xl bg-card shadow-card">
         {pending.length === 0 && <p className="p-6 text-sm text-muted-foreground">Nothing to review.</p>}

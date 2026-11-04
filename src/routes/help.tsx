@@ -7,9 +7,9 @@ export const Route = createFileRoute("/help")({
 });
 
 const FAQS = [
-  ["Is it free to post a property?", "Yes. Landlords and agents post for free. Later you'll be able to pay to promote a listing; promoted listings are always labelled “Sponsored”."],
-  ["Why must I verify my identity before posting?", "To reduce fraud, landlords and agents submit a government ID (international passport, NIN or driver's licence). Our team reviews it before you can publish."],
-  ["Does a “Verified identity” badge mean the property is legally verified?", "No. It only means we checked the person's ID. “Verified agency” means we checked a business registration, and “Details reviewed” means our team looked over the listing. Always confirm title documents yourself before paying."],
+  ["Is it free to post a property?", "Yes. Landlords post for free. Request promotion from your dashboard for a live listing; the team will confirm pricing and payment before activating it. Promoted listings are labelled “Sponsored”."],
+  ["Why must I verify my identity before posting?", "To reduce fraud, landlords submit a government ID (international passport, NIN or driver's licence). Our team reviews it before you can publish."],
+  ["Does a “Verified identity” badge mean the property is legally verified?", "No. It only means we checked the person's ID. “Details reviewed” means our team looked over the listing. Always confirm title documents yourself before paying."],
   ["Why can't I see the owner's phone number?", "To protect everyone's privacy, contact happens through private messages. Either side can choose to share a number in a message."],
   ["How do viewings work?", "Pick a date and time on the listing. The owner can accept, decline or suggest another time — you'll see updates in your dashboard."],
   ["Why isn't my new listing showing?", "Every listing is reviewed before going live. You can see its status in your dashboard."],
