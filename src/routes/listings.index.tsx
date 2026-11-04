@@ -7,6 +7,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
 import { CATEGORIES, STATES } from "@/lib/listings";
 import { LISTING_COLS } from "@/lib/listings";
+import { categoryMatches } from "@/lib/marketplace-rules";
 
 type S = { q?: string | undefined; state?: string | undefined; city?: string | undefined; category?: string | undefined; purpose?: string | undefined; min?: number | undefined; max?: number | undefined; sort?: string | undefined };
 
@@ -43,7 +44,7 @@ function ListingsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["listings", s],
     queryFn: async () => {
-      let query = supabase.from("listings").select(LISTING_COLS).order("sponsored", { ascending: false });
+      let query = supabase.from("listings").select(LISTING_COLS).eq("status", "approved").order("sponsored", { ascending: false });
       if (s.state) query = query.eq("state", s.state);
       if (s.city) query = query.ilike("city", `%${s.city}%`);
       if (s.category) query = query.eq("category", s.category);
@@ -56,7 +57,7 @@ function ListingsPage() {
       else query = query.order("created_at", { ascending: false });
       const { data, error } = await query.limit(100);
       if (error) throw error;
-      return data;
+      return data?.filter(l => categoryMatches(l.category, s.category));
     },
   });
 

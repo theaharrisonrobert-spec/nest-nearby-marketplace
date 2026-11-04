@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { AMENITIES, CATEGORIES, STATES } from "@/lib/listings";
+import { canPublish } from "@/lib/marketplace-rules";
 
 export const Route = createFileRoute("/_authenticated/post")({
   head: () => ({
@@ -23,13 +24,14 @@ function PostPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null; verification_status: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null; verification_status: string; account_type: string } | null>(null);
   useEffect(() => {
-    supabase.from("profiles").select("full_name, phone, verification_status").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
+    supabase.from("profiles").select("full_name, phone, verification_status, account_type").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
   }, [user.id]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!canPublish(profile?.account_type, profile?.verification_status)) { toast.error("An approved landlord account is required to post"); return; }
     const f = new FormData(e.currentTarget);
     const price = Number(String(f.get("price")).replace(/,/g, ""));
     if (!price || price <= 0) { toast.error("Enter your price in Naira"); return; }
@@ -79,7 +81,9 @@ function PostPage() {
   const label = "mb-1 block text-sm font-medium";
   const [purpose, setPurpose] = useState("rent");
 
-  if (profile && profile.verification_status !== "approved") {
+  if (!profile) return <div className="min-h-screen bg-background"><SiteHeader /><p className="mx-auto max-w-xl px-5 py-16 text-muted-foreground">Loading your account…</p></div>;
+  if (profile.account_type !== "landlord") return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16"><h1 className="text-3xl font-bold">Landlord account required</h1><p className="mt-3 text-muted-foreground">Buyer / Tenant accounts can discover properties, message owners and arrange viewings.</p><Link to="/listings" className="mt-5 inline-block text-primary">Browse properties</Link></div><SiteFooter /></div>;
+  if (profile.verification_status !== "approved") {
     const pending = profile.verification_status === "pending";
     return (
       <div className="min-h-screen bg-muted/40">
