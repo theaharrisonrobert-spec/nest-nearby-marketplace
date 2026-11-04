@@ -9,7 +9,7 @@ import hall from "@/assets/hall.jpg";
 import hero from "@/assets/hero.jpg";
 
 type Row = Database["public"]["Tables"]["listings"]["Row"];
-export type Listing = Omit<Row, "contact_phone" | "address">;
+export type Listing = Omit<Row, "contact_phone" | "address" | "promotion_requested">;
 
 /** Public columns only — phone and exact address are never readable by visitors. */
 export const LISTING_COLS =

@@ -17,8 +17,8 @@ export const Route = createFileRoute("/how-it-works")({
 });
 
 const steps = [
-  { icon: UserPlus, t: "Create an account", d: "Choose Landlord / Property Owner, Real Estate Agent / Agency, or Buyer / Tenant, and confirm your email." },
-  { icon: ShieldCheck, t: "Complete verification", d: "Landlords and agents submit a government ID (passport, NIN or driver's licence). Agencies can also be verified. Identity checks do not prove legal ownership of a property." },
+  { icon: UserPlus, t: "Create an account", d: "Choose Landlord / Property Owner or Buyer / Tenant, and confirm your email." },
+  { icon: ShieldCheck, t: "Complete verification", d: "Landlords submit a government ID (passport, NIN or driver's licence). Approved accounts show a verified identity badge. Identity checks do not prove legal ownership of a property." },
   { icon: Search, t: "List or discover", d: "Owners post for free at their own price; every listing is reviewed before it goes live. Seekers filter by state, area, type and budget." },
   { icon: MessageCircle, t: "Connect safely", d: "Send private messages and request viewings without exposing phone numbers. Report anything suspicious." },
 ];

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { InfoPage, meta } from "@/components/InfoPage";
 
 export const Route = createFileRoute("/terms")({
-  head: () => meta("Terms of Service", "The rules for using RentReady as a landlord, agent, buyer or tenant."),
+  head: () => meta("Terms of Service", "The rules for using RentReady as a landlord, buyer or tenant."),
   component: Terms,
 });
 

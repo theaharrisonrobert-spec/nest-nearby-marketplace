@@ -11,7 +11,7 @@ import { ArrowRight, Building2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRo
 
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined; type?: AccountType } => {
+  validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined; type?: AccountType | undefined } => {
     const n = s["next"];
     return { mode: s["mode"] === "signup" ? "signup" : "signin", next: typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : undefined, type: s["type"] === "landlord" || s["type"] === "tenant" ? s["type"] : undefined };
   },
@@ -121,8 +121,6 @@ function AuthPage() {
                   </Button>
                 ))}
               </div>
-              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or continue with<span className="h-px flex-1 bg-border" /></div>
-              <Button onClick={google} variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
               <p className="mt-5 text-center text-sm text-muted-foreground">Already have an account? <Link to="/auth" search={{ mode: "signin", next }} className="font-medium text-primary">Sign in</Link></p>
             </div>
           ) : (

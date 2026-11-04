@@ -51,7 +51,10 @@ function Detail() {
   const { data: badges } = useQuery({
     queryKey: ["badges", l?.owner_id],
     enabled: !!l?.owner_id,
-    queryFn: async () => (await supabase.rpc("owner_badges", { _owner: l!.owner_id! })).data?.[0] ?? null,
+    queryFn: async () => {
+      if (!l?.owner_id) return null;
+      return (await supabase.rpc("owner_badges", { _owner: l.owner_id })).data?.[0] ?? null;
+    },
   });
   const { data: address } = useQuery({
     queryKey: ["address", id],

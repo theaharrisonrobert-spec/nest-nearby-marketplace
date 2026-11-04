@@ -1,7 +1,9 @@
 # RentReady changes
-- [ ] Simple shared navigation and account menu matching supplied references.
-- [ ] Separate landlord and buyer/tenant registration; remove agency option.
-- [ ] Verified account indicators and landlord listing deletion.
-- [ ] Promotion requests after free posting, with admin review.
-- [ ] Strict property-category filtering and tests.
-- [ ] Verify public and signed-in flows.
+- [x] Simple shared navigation and account menu matching supplied references.
+- [x] Separate landlord and buyer/tenant registration; remove agency option.
+- [x] Verified account indicators and landlord listing deletion controls.
+- [x] Promotion requests after free posting, with admin review.
+- [x] Strict property-category filtering and tests.
+- [x] Verify public menus, category results, both signup forms and signed-in buyer restrictions.
+- [ ] Verify deletion, verified badge and promotion using an approved landlord account. Blocker: requester account is an unverified buyer; user must identify a landlord account to authorize testing.
+- [ ] Automated paid checkout. Blocker: promotion prices and payment setup are not supplied; requests use manual admin pricing/payment confirmation.

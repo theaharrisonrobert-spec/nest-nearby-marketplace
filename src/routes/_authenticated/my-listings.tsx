@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/my-listings")({
   head: () => ({
@@ -33,8 +34,8 @@ function MyListings() {
   });
 
   async function remove(id: string) {
-    if (!confirm("Remove this listing?")) return;
-    const { error } = await supabase.from("listings").delete().eq("id", id);
+    if (!confirm("Remove this listing and its messages and viewing requests?")) return;
+    const { error } = await supabase.from("listings").delete().eq("id", id).eq("owner_id", user.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Listing removed");
     qc.invalidateQueries({ queryKey: ["my-listings"] });
@@ -58,7 +59,7 @@ function MyListings() {
             {data.map((l) => (
               <div key={l.id}>
                 <ListingCard l={l} />
-                <button onClick={() => remove(l.id)} className="mt-2 w-full rounded-lg border border-destructive py-2 text-sm text-destructive">Remove</button>
+                <div className="mt-2 flex items-center justify-between gap-2"><Button variant="outline" className="text-destructive" onClick={() => remove(l.id)}>Delete listing</Button><Button asChild variant="link"><Link to="/dashboard">Manage promotion</Link></Button></div>
               </div>
             ))}
           </div>
