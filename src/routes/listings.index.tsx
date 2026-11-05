@@ -51,7 +51,7 @@ function ListingsPage() {
       if (s.purpose) query = query.eq("purpose", s.purpose);
       if (s.min) query = query.gte("price", s.min);
       if (s.max) query = query.lte("price", s.max);
-      if (s.q) query = query.or(`title.ilike.%${s.q}%,city.ilike.%${s.q}%,address.ilike.%${s.q}%,state.ilike.%${s.q}%`);
+      if (s.q) query = query.or(`title.ilike.%${s.q}%,city.ilike.%${s.q}%,landmarks.ilike.%${s.q}%,state.ilike.%${s.q}%`);
       if (s.sort === "low") query = query.order("price", { ascending: true });
       else if (s.sort === "high") query = query.order("price", { ascending: false });
       else query = query.order("created_at", { ascending: false });

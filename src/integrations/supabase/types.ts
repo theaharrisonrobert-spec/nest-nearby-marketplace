@@ -324,6 +324,13 @@ export type Database = {
         Returns: boolean
       }
       listing_address: { Args: { _id: string }; Returns: string }
+      listing_private_details: {
+        Args: { _id: string }
+        Returns: {
+          address: string
+          contact_phone: string
+        }[]
+      }
       owner_badges: {
         Args: { _owner: string }
         Returns: {
