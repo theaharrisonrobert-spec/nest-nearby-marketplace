@@ -4,7 +4,7 @@ import {
   Building2, ChevronDown, Heart, Home as HomeIcon, KeyRound, LandPlot, Menu, MessageSquare,
   PartyPopper, Plus, Search, Store, Briefcase, Warehouse, ShoppingBag, User, X, type LucideIcon,
 } from "lucide-react";
-import hero from "@/assets/hero.jpg";
+import heroAsset from "@/assets/hero-apartments.jpg.asset.json";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { STATES, POPULAR_AREAS } from "@/lib/listings";
@@ -62,7 +62,7 @@ function Index() {
   return (
     <div className="flex min-h-screen flex-col bg-background pb-16 lg:pb-0">
       <section className="relative bg-ink text-ink-foreground">
-        <img src={hero} alt="Apartment building in Nigeria" width={1600} height={912} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={heroAsset.url} alt="Modern apartment building under a blue sky" width={1920} height={1280} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-ink/35" />
         <SiteHeader overlay />
         <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-24 pt-10 text-center md:pb-32 md:pt-16">
