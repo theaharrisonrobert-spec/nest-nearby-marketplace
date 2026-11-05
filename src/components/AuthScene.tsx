@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, House, LockKeyhole, Menu, ShieldCheck, UserRoundPlus, X } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import residence from "@/assets/auth-residence.jpg";
+import residence from "@/assets/hero-apartments.jpg.asset.json";
 import type { ReactNode } from "react";
 
 export function AuthScene({ children }: { children: ReactNode }) {
@@ -10,7 +10,7 @@ export function AuthScene({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="auth-scene relative isolate">
-        <img src={residence} width={1600} height={1024} alt="Modern apartments with illuminated balconies and landscaped gardens at dusk" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
+        <img src={residence.url} width={1920} height={1280} alt="Modern apartment building under a blue sky" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
         <div className="absolute inset-0 -z-10 bg-hero-overlay" />
         <div className="mx-auto grid max-w-7xl items-center gap-9 px-5 py-9 sm:px-8 sm:py-12 lg:grid-cols-[1.25fr_1fr] lg:gap-16 lg:py-10">
           <section className="text-ink-foreground">
