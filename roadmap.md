@@ -1,5 +1,6 @@
 # RentReady changes
 - [x] Security fix 01: lock landlord phone numbers and hidden addresses at database level (tested 4 roles).
+- [x] Security fix 02: block fake admin notifications (tested 4 roles).
 - [x] Simple shared navigation and account menu matching supplied references.
 - [x] Separate landlord and buyer/tenant registration; remove agency option.
 - [x] Verified account indicators and landlord listing deletion controls.
