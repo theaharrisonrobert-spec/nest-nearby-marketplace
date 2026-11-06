@@ -53,10 +53,6 @@ function VerifyPage() {
       verification_status: "pending",
     }).eq("id", user.id);
     if (error) { setBusy(false); toast.error(error.message); return; }
-    await supabase.from("admin_notifications").insert({
-      user_id: user.id, kind: "verification",
-      message: `Verification submitted: ${profile?.full_name ?? "A user"} (${String(f.get("id_type"))})`,
-    });
     setBusy(false);
     toast.success("Documents submitted for review");
     setProfile((p) => p && { ...p, verification_status: "pending" });

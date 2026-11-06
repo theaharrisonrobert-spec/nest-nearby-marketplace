@@ -71,7 +71,6 @@ function PostPage() {
     }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("admin_notifications").insert({ user_id: user.id, kind: "listing", message: `New listing awaiting review: ${String(f.get("title"))}` });
     toast.success("Submitted! Your property goes live once our team approves it.");
     navigate({ to: "/dashboard" });
     void data;
