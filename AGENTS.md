@@ -13,3 +13,4 @@
 - Reuse SiteHeader for shared navigation and account menus to keep session and verification indicators consistent across pages.
 - Keep registration, category, publishing and promotion eligibility in marketplace-rules with concrete tests; enforce ownership and publishing eligibility in database policies too.
 - Promotion requests are owner-scoped listing flags reviewed by admins; sponsorship is activated manually only after payment is confirmed, because checkout pricing is not configured.
+- Listing phone and address columns are not readable by anon/authenticated (column-level grants); owners and admins read them only via listing_private_details, and the public via listing_address when show_address is on — keep new listing columns explicitly granted.
