@@ -340,6 +340,7 @@ export type Database = {
           identity_verified: boolean
         }[]
       }
+      record_sign_in: { Args: { _method?: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

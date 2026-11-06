@@ -96,7 +96,6 @@ function Detail() {
     const f = new FormData(e.currentTarget);
     const { error } = await supabase.from("reports").insert({ listing_id: l.id, reporter_id: user.id, reason: String(f.get("reason")), details: String(f.get("details") || "").slice(0, 1000) || null });
     if (error) { toast.error(error.message); return; }
-    await supabase.from("admin_notifications").insert({ user_id: user.id, kind: "report", message: `Listing reported: ${l.title}` });
     setReportOpen(false);
     toast.success("Thank you. Our team will review this listing.");
   }

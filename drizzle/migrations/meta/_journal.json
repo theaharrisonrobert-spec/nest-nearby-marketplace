@@ -43,6 +43,13 @@
       "when": 1793879353699,
       "tag": "0005_protect_listing_private_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793923701305,
+      "tag": "0006_lock_admin_notifications",
+      "breakpoints": true
     }
   ]
 }

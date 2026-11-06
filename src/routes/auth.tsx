@@ -28,8 +28,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-async function notifyAdmin(userId: string, kind: string, message: string) {
-  await supabase.from("admin_notifications").insert({ user_id: userId, kind, message });
+async function notifyAdmin(method: "email" | "google") {
+  await supabase.rpc("record_sign_in", { _method: method });
 }
 
 function AuthPage() {
@@ -62,7 +62,7 @@ function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
-      if (data.user) await notifyAdmin(data.user.id, "signin", `Sign in: ${data.user.email ?? email}`);
+      if (data.user) await notifyAdmin("email");
       toast.success("Welcome back!");
       navigate({ to: next ?? "/" });
     }
@@ -82,7 +82,7 @@ function AuthPage() {
         if (error) { toast.error(error.message); return; }
         sessionStorage.removeItem("rr-signup-type");
       }
-      await notifyAdmin(data.user.id, "signin", `Sign in (Google): ${data.user.email ?? ""}`);
+      await notifyAdmin("google");
     }
     navigate({ to: next ?? "/" });
   }
