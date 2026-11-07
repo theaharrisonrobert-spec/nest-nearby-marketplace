@@ -1,4 +1,5 @@
 # RentReady changes
+- [ ] Security fix 03: inspect and secure file storage; preserve files and test visitor, tenant, owner and admin access.
 - [x] Security fix 01: lock landlord phone numbers and hidden addresses at database level (tested 4 roles).
 - [x] Security fix 02: block fake admin notifications (tested 4 roles).
 - [x] Simple shared navigation and account menu matching supplied references.
