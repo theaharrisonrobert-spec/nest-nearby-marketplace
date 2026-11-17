@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+
 import { AuthScene } from "@/components/AuthScene";
 import { Button } from "@/components/ui/button";
 import { accountType as normalizeAccountType } from "@/lib/marketplace-rules";
@@ -68,24 +68,16 @@ function AuthPage() {
     }
   }
 
-  async function google() {
+    async function google() {
     if (signup && !accountType) { toast.error("Choose Landlord or Buyer / Tenant first"); return; }
     if (signup && accountType) sessionStorage.setItem("rr-signup-type", accountType);
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) { toast.error("Google sign-in failed"); return; }
-    if (r.redirected) return;
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      const selected = sessionStorage.getItem("rr-signup-type");
-      if (selected) {
-        const { error } = await supabase.from("profiles").update({ account_type: normalizeAccountType(selected) }).eq("id", data.user.id);
-        if (error) { toast.error(error.message); return; }
-        sessionStorage.removeItem("rr-signup-type");
-      }
-      await notifyAdmin("google");
-    }
-    navigate({ to: next ?? "/" });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) { toast.error("Google sign-in failed"); return; }
   }
+        
 
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
   return (
