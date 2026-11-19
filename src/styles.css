@@ -169,3 +169,13 @@
 @media (max-width: 1023px) {
   .auth-scene { min-height: auto; }
 }
+/* FIX: inputs blocked on mobile */
+input, textarea, select, button, a {
+  pointer-events: auto !important;
+  touch-action: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+body, #root {
+  touch-action: auto !important;
+}
