@@ -43,21 +43,7 @@ const CARDS: Card[] = [
 ];
 
 function Index() {
-  const navigate = useNavigate();
   const { user } = useSession();
-  const [q, setQ] = useState("");
-
-
-  function search(e: React.FormEvent) {
-    e.preventDefault();
-    const v = q.trim();
-    const [city = "", st] = v.split(",").map((s) => s.trim());
-    const stateMatch = STATES.find((s) => s.toLowerCase() === (st ?? city).toLowerCase());
-    if (!v) void navigate({ to: "/listings" });
-    else if (st && stateMatch) void navigate({ to: "/listings", search: { state: stateMatch, city } });
-    else if (stateMatch) void navigate({ to: "/listings", search: { state: stateMatch } });
-    else void navigate({ to: "/listings", search: { q: v } });
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-16 lg:pb-0">
@@ -66,10 +52,7 @@ function Index() {
         <div className="absolute inset-0 bg-ink/35" />
         <SiteHeader overlay />
         <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-24 pt-10 text-center md:pb-32 md:pt-16">
-          <h1 className="text-5xl font-bold leading-[1.05] drop-shadow md:text-7xl">Rentals. Homes.<br />Shops. Land.</h1>
-         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" autoComplete="off" className="w-full bg-transparent py-3 text-base outline-none" />
-            <Button type="submit" variant="ghost" size="icon" aria-label="Search"><Search strokeWidth={2.5} /></Button>
-          </form>
+          <HeroSearch />
         </div>
       </section>
 
@@ -145,5 +128,25 @@ function BottomItem({ to, icon: Icon, label }: { to: "/listings" | "/post" | "/m
       <Icon className="h-6 w-6 text-foreground/70" />
       {label}
     </Link>
+  );
+}
+function HeroSearch() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  function search(e: React.FormEvent) {
+    e.preventDefault();
+    const v = q.trim();
+    const [city = "", st] = v.split(",").map((s) => s.trim());
+    const stateMatch = STATES.find((s) => s.toLowerCase() === (st ?? city).toLowerCase());
+    if (!v) void navigate({ to: "/listings" });
+    else if (st && stateMatch) void navigate({ to: "/listings", search: { state: stateMatch, city } });
+    else if (stateMatch) void navigate({ to: "/listings", search: { state: stateMatch } });
+    else void navigate({ to: "/listings", search: { q: v } });
+  }
+  return (
+    <form onSubmit={search} className="mt-8 flex w-full items-center rounded-xl border border-border bg-card px-5 py-1.5 text-card-foreground shadow-card">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" autoComplete="off" className="w-full bg-transparent py-3 text-base outline-none" />
+      <Button type="submit" variant="ghost" size="icon" aria-label="Search"><Search strokeWidth={2.5} /></Button>
+    </form>
   );
 }
