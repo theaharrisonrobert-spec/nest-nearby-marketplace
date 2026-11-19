@@ -9,7 +9,6 @@ import { accountType as normalizeAccountType } from "@/lib/marketplace-rules";
 import { ACCOUNT_TYPES, type AccountType } from "@/lib/listings";
 import { ArrowRight, Building2, Eye, EyeOff, KeyRound, LockKeyhole, Mail, UserRoundPlus } from "lucide-react";
 
-
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { mode: "signin" | "signup"; next?: string | undefined; type?: AccountType | undefined } => {
     const n = s["next"];
@@ -41,34 +40,42 @@ function AuthPage() {
   const signup = mode === "signup";
   const [accountType, setAccountType] = useState<AccountType | null>(selectedType ?? null);
 
+  // FIX: Controlled inputs - typing is saved in state so it never gets wiped on re-render
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   useEffect(() => { setAccountType(selectedType ?? null); }, [selectedType]);
+  // Reset form when switching Login <-> Sign Up, but DON'T wipe while typing
+  useEffect(() => { setSent(false); }, [mode]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const email = String(f.get("email"));
-    const password = String(f.get("password"));
+    if (busy) return;
     setBusy(true);
-    if (signup) {
-      if (!accountType) { setBusy(false); return; }
-      const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: window.location.origin, data: { full_name: f.get("name"), phone: f.get("phone"), account_type: accountType ?? "tenant" } },
-      });
+    try {
+      if (signup) {
+        if (!accountType) { toast.error("Choose Landlord or Buyer / Tenant first"); return; }
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(), password,
+          options: { emailRedirectTo: window.location.origin, data: { full_name: name, phone, account_type: accountType ?? "tenant" } },
+        });
+        if (error) { toast.error(error.message); return; }
+        setSent(true);
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (error) { toast.error(error.message); return; }
+        if (data.user) await notifyAdmin("email");
+        toast.success("Welcome back!");
+        navigate({ to: next ?? "/" });
+      }
+    } finally {
       setBusy(false);
-      if (error) { toast.error(error.message); return; }
-      setSent(true);
-    } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      setBusy(false);
-      if (error) { toast.error(error.message); return; }
-      if (data.user) await notifyAdmin("email");
-      toast.success("Welcome back!");
-      navigate({ to: next ?? "/" });
     }
   }
 
-    async function google() {
+  async function google() {
     if (signup && !accountType) { toast.error("Choose Landlord or Buyer / Tenant first"); return; }
     if (signup && accountType) sessionStorage.setItem("rr-signup-type", accountType);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -77,7 +84,6 @@ function AuthPage() {
     });
     if (error) { toast.error("Google sign-in failed"); return; }
   }
-        
 
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
   return (
@@ -107,7 +113,7 @@ function AuthPage() {
                   ["landlord", Building2, "List and manage your own properties."],
                   ["tenant", KeyRound, "Find a home, shop or space to rent or buy."],
                 ] as const).map(([k, Icon, d]) => (
-                  <Button variant="outline" key={k} onClick={() => setAccountType(k)} className="h-auto w-full justify-start gap-4 whitespace-normal p-4 text-left hover:border-primary hover:bg-brand-soft">
+                  <Button variant="outline" key={k} type="button" onClick={() => setAccountType(k)} className="h-auto w-full justify-start gap-4 whitespace-normal p-4 text-left hover:border-primary hover:bg-brand-soft">
                     <Icon className="h-7 w-7 shrink-0 text-primary" />
                     <span><span className="block font-semibold">{ACCOUNT_TYPES[k].label}</span><span className="text-xs text-muted-foreground">{d}</span></span>
                   </Button>
@@ -118,24 +124,24 @@ function AuthPage() {
           ) : (
             <>
               {signup && accountType && (
-                <Button variant="secondary" size="sm" onClick={() => setAccountType(null)} className="mb-3 text-primary">{ACCOUNT_TYPES[accountType].label} · change</Button>
+                <Button variant="secondary" size="sm" type="button" onClick={() => setAccountType(null)} className="mb-3 text-primary">{ACCOUNT_TYPES[accountType].label} · change</Button>
               )}
               <h2 className="text-center text-3xl font-bold">{signup ? accountType === "landlord" ? "Landlord sign up" : "Buyer / Tenant sign up" : "Welcome Back!"}</h2>
               <p className="mb-6 mt-1 text-center text-muted-foreground">{signup ? "Your next move starts here." : "Sign in to access your account"}</p>
               <form onSubmit={onSubmit} className="space-y-3">
                 {signup && (
                   <>
-                    <input name="name" required placeholder="Full name" className={input} />
-                    <input name="phone" required placeholder="Phone number (e.g. 0803…)" className={input} />
+                    <input name="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Full name" autoComplete="name" className={input} />
+                    <input name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="Phone number (e.g. 0803…)" autoComplete="tel" inputMode="tel" className={input} />
                   </>
                 )}
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
-                  <input name="email" aria-label="Email address" autoComplete="email" type="email" required placeholder="Email address" className={`${input} pl-12`} />
+                  <input name="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email address" autoComplete="email" type="email" required placeholder="Email address" className={`${input} pl-12`} />
                 </div>
                 <div className="relative">
                   <LockKeyhole className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
-                  <input name="password" aria-label="Password" autoComplete={signup ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} required minLength={6} placeholder="Enter your password" className={`${input} pl-12 pr-12`} />
+                  <input name="password" value={password} onChange={(e) => setPassword(e.target.value)} aria-label="Password" autoComplete={signup ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} required minLength={6} placeholder="Enter your password" className={`${input} pl-12 pr-12`} />
                   <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1.5 text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff /> : <Eye />}</Button>
                 </div>
                 {!signup && (
@@ -149,7 +155,7 @@ function AuthPage() {
               </form>
               {signup && <p className="mt-3 text-xs text-muted-foreground">We confirm your email first. Landlords then submit an ID before publishing. See our <Link to="/privacy" className="underline">privacy policy</Link> and <Link to="/terms" className="underline">terms</Link>.</p>}
               <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or continue with<span className="h-px flex-1 bg-border" /></div>
-              <Button onClick={google} variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
+              <Button onClick={google} type="button" variant="outline" className="h-11 w-full"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span> Continue with Google</Button>
               <p className="mt-5 text-center text-sm text-muted-foreground">
                 {signup ? "Already have an account? " : "New to RentReady? "}
                 <Link to="/auth" search={{ mode: signup ? "signin" : "signup", next }} className="font-medium text-primary">{signup ? "Sign in" : "Create an account"}</Link>
