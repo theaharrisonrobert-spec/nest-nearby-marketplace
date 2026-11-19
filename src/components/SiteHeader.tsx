@@ -30,13 +30,15 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     queryKey: ["account-menu-admin", user?.id], enabled: !!user,
     queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data : false,
   });
-  useEffect(() => {
-    if (!open && !account) return;
-    const previous = document.body.style.overflow;
+    useEffect(() => {
+    if (!open && !account) {
+      document.body.style.overflow = "";
+      return;
+    }
     document.body.style.overflow = "hidden";
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); setAccount(false); } };
     window.addEventListener("keydown", close);
-    return () => { document.body.style.overflow = previous; window.removeEventListener("keydown", close); };
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", close); };
   }, [open, account]);
   async function signOut() {
     setAccount(false); setOpen(false);
