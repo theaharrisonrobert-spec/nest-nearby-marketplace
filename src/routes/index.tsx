@@ -67,8 +67,7 @@ function Index() {
         <SiteHeader overlay />
         <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-24 pt-10 text-center md:pb-32 md:pt-16">
           <h1 className="text-5xl font-bold leading-[1.05] drop-shadow md:text-7xl">Rentals. Homes.<br />Shops. Land.</h1>
-          <form onSubmit={search} className="mt-8 flex w-full items-center rounded-xl border border-border bg-card px-5 py-1.5 text-card-foreground shadow-card">
-            <input list="rr-areas" value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" className="w-full bg-transparent py-3 text-base outline-none" />
+          <<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" autoComplete="off" className="w-full bg-transparent py-3 text-base outline-none" />
             <datalist id="rr-areas">{AREA_OPTIONS.map((a) => <option key={a} value={a} />)}</datalist>
             <Button type="submit" variant="ghost" size="icon" aria-label="Search"><Search strokeWidth={2.5} /></Button>
           </form>
