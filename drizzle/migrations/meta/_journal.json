@@ -50,6 +50,41 @@
       "when": 1793923701305,
       "tag": "0006_lock_admin_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795209977297,
+      "tag": "0007_professional_signup_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795290500000,
+      "tag": "0008_direct_viewings_ratings_premium_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795290600000,
+      "tag": "0009_tenant_paystack_premium",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795290700000,
+      "tag": "0010_phase1_admin_approval_support",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795290800000,
+      "tag": "0011_admin_notification_emails",
+      "breakpoints": true
     }
   ]
 }

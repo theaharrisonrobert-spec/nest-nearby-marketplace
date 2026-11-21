@@ -1,1 +1,16 @@
-project_id = "mgojgzxpcscbstfnoyws"
+project_id = "rcqbjuqapxdgkkdfjysm"
+
+[functions.paystack-webhook]
+verify_jwt = false
+
+[functions.create-tenant-premium-checkout]
+verify_jwt = true
+
+[functions.verify-tenant-premium]
+verify_jwt = true
+
+[functions.cancel-tenant-premium]
+verify_jwt = true
+
+[functions.deliver-email-outbox]
+verify_jwt = false

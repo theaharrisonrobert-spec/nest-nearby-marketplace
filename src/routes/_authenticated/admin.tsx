@@ -1,12 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Bell, Check, Eye, ShieldX, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { AdminListings } from "@/components/AdminListings";
+import { AdminPhaseOne } from "@/components/AdminPhaseOne";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth", search: { mode: "signin", next: "/admin" } });
+    const { data: role, error } = await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+    if (error || !role) throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [
       { title: "Admin — RentReady" },
@@ -34,25 +40,32 @@ type Notification = {
   message: string;
   created_at: string;
 };
+type ReviewFlag = { id: string; full_name: string | null; phone: string | null };
 
 function AdminPage() {
   const { user } = Route.useRouteContext();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [pending, setPending] = useState<PendingUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [reviewFlags, setReviewFlags] = useState<ReviewFlag[]>([]);
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data: role } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
     setIsAdmin(!!role);
     if (!role) return;
-    const [{ data: p }, { data: n }] = await Promise.all([
+    const [{ data: p }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, phone, id_type, id_number, id_document_path, created_at")
         .eq("verification_status", "pending").not("id_type", "is", null).order("created_at", { ascending: false }),
       supabase.from("admin_notifications").select("id, kind, message, created_at").order("created_at", { ascending: false }).limit(50),
+      supabase.from("profiles").select("id, full_name, phone").eq("account_review_required", true),
+      supabase.rpc("admin_site_visit_count"),
     ]);
     setPending(p ?? []);
     setNotifications(n ?? []);
+    setReviewFlags(r ?? []);
+    setVisitorCount(visits ?? 0);
   }, [user.id]);
 
   useEffect(() => { load(); }, [load]);
@@ -68,6 +81,13 @@ function AdminPage() {
     if (error) { toast.error(error.message); return; }
     toast.success(approved ? "User approved — they can now post" : "Submission rejected");
     setPending((list) => list.filter((p) => p.id !== id));
+  }
+
+  async function clearReview(id: string) {
+    const { error } = await supabase.from("profiles").update({ account_review_required: false }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setReviewFlags((flags) => flags.filter((flag) => flag.id !== id));
+    toast.success("Account review flag cleared");
   }
 
   async function viewDocument(path: string) {
@@ -96,6 +116,9 @@ function AdminPage() {
       <div className="mx-auto max-w-4xl px-5 py-10">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="mt-1 text-muted-foreground">Approve identities and watch site activity.</p>
+        <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-card px-5 py-4 shadow-card"><Eye className="h-5 w-5 text-primary" /><span className="text-2xl font-bold">{visitorCount ?? "—"}</span><span className="text-sm text-muted-foreground">homepage visits</span></div>
+
+        <AdminPhaseOne />
 
         <h2 className="mt-10 text-xl font-bold">Pending verifications ({pending.length})</h2>
         {pending.length === 0 ? (
@@ -131,7 +154,8 @@ function AdminPage() {
           </div>
         )}
 
-        {isAdmin && <AdminListings />}
+        <h2 className="mt-10 text-xl font-bold">Landlord accounts under review ({reviewFlags.length})</h2>
+        {reviewFlags.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No landlord accounts are currently flagged.</p> : <div className="mt-3 space-y-3">{reviewFlags.map((flag) => <div key={flag.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-card p-5 shadow-card"><div><p className="font-semibold">{flag.full_name ?? "Unnamed landlord"}</p><p className="text-sm text-muted-foreground">{flag.phone ?? "No phone on profile"} · Three or more ratings below 3 stars</p></div><button onClick={() => void clearReview(flag.id)} className="rounded-lg border border-primary px-3 py-2 text-sm font-medium text-primary">Clear review flag</button></div>)}</div>}
 
         <h2 className="mt-10 flex items-center gap-2 text-xl font-bold"><Bell className="h-5 w-5" /> Activity</h2>
         <div className="mt-3 divide-y divide-border rounded-xl bg-card shadow-card">

@@ -1,152 +1,106 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Building2, ChevronDown, Heart, Home as HomeIcon, KeyRound, LandPlot, Menu, MessageSquare,
-  PartyPopper, Plus, Search, Store, Briefcase, Warehouse, ShoppingBag, User, X, type LucideIcon,
-} from "lucide-react";
-import heroAsset from "@/assets/hero-apartments.jpg.asset.json";
-import { SiteHeader } from "@/components/SiteHeader";
+import { ArrowRight, Building2, MapPin, MessageCircle, Search, ShieldCheck, type LucideIcon } from "lucide-react";
+import { HeroBackdrop } from "@/components/HeroBackdrop";
+import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { STATES, POPULAR_AREAS } from "@/lib/listings";
-import { useSession } from "@/hooks/use-session";
+import { CATEGORIES, formatNaira, LISTING_COLS, listingImage, PERIODS, type Listing } from "@/lib/listings";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
-  head: () => ({
-    meta: [
-      { title: "RentReady — Rent, Buy & List Property Across Nigeria" },
-      { name: "description", content: "Find apartments, houses, shops, malls, office spaces, event halls, land and other spaces for rent or sale in every Nigerian state." },
-      { property: "og:title", content: "RentReady — Rentals. Homes. Shops. Land." },
-      { property: "og:description", content: "Search every state and area in Nigeria. Talk to owners directly." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => ({ meta: [
+    { title: "RentReady — Rent, Buy & List Property Across Nigeria" },
+    { name: "description", content: "Find homes, shops, offices and land for rent or sale across Nigeria." },
+    { property: "og:title", content: "RentReady — Rentals. Homes. Shops. Land." },
+    { property: "og:description", content: "Search every state and area in Nigeria. Talk to owners directly." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
 });
 
-const AREA_OPTIONS = [
-  ...POPULAR_AREAS.filter((a) => a.city).map((a) => `${a.city}, ${a.state}`),
-  ...STATES,
-];
-
-type Card = { icon: LucideIcon; title: string; text: string; cta: string; to: "/listings" | "/post"; search: Record<string, string> };
-const CARDS: Card[] = [
-  { icon: KeyRound, title: "Rent a home", text: "Apartments, flats and houses for rent — message the owner directly, no agent needed.", cta: "Find rentals", to: "/listings", search: { purpose: "rent" } },
-  { icon: HomeIcon, title: "Buy a home", text: "Browse houses and apartments for sale in Lagos, Abuja and every state.", cta: "Browse homes", to: "/listings", search: { purpose: "sale" } },
-  { icon: Store, title: "Shops", text: "Shops and stores for rent or sale in busy markets and streets.", cta: "Find shops", to: "/listings", search: { category: "Shops" } },
-  { icon: ShoppingBag, title: "Malls", text: "Mall units and plaza spaces for your business.", cta: "Find mall spaces", to: "/listings", search: { category: "Malls" } },
-  { icon: Briefcase, title: "Office spaces", text: "Offices and co-working spaces for teams of any size.", cta: "Find offices", to: "/listings", search: { category: "Office Spaces" } },
-  { icon: PartyPopper, title: "Event halls", text: "Halls and venues for weddings, parties and meetings.", cta: "Find event halls", to: "/listings", search: { category: "Event Halls" } },
-  { icon: LandPlot, title: "Land", text: "Plots and land for sale or lease across Nigeria.", cta: "Find land", to: "/listings", search: { category: "Land" } },
-  { icon: Warehouse, title: "Other spaces", text: "Warehouses, garages, storage and more.", cta: "See other spaces", to: "/listings", search: { category: "Other Spaces" } },
-  { icon: Building2, title: "List your property", text: "Posting is free. Set your own price and reach serious tenants and buyers.", cta: "Post a property", to: "/post", search: {} },
-];
-
 function Index() {
-  const { user } = useSession();
-
-  return (
-    <div className="flex min-h-screen flex-col bg-background pb-16 lg:pb-0">
-      <section className="relative bg-ink text-ink-foreground">
-        <img src={heroAsset.url} alt="Modern apartment building under a blue sky" width={1920} height={1280} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-ink/35" />
-        <SiteHeader overlay />
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pb-24 pt-10 text-center md:pb-32 md:pt-16">
-          <HeroSearch />
-        </div>
-      </section>
-
-      <section className="px-5 py-12 text-center">
-        <h2 className="text-3xl font-bold">Find your next space</h2>
-        <p className="mx-auto mt-3 max-w-xl text-lg text-muted-foreground">Search any state or area in Nigeria and talk to owners directly through private messages.</p>
-      </section>
-
-      <section className="bg-muted/60 px-5 py-10">
-        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {CARDS.map((c) => (
-            <div key={c.title} className="flex flex-col items-center rounded-lg border border-border bg-card px-6 py-12 text-center shadow-card">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-brand-soft">
-                <c.icon className="h-14 w-14 text-primary" strokeWidth={1.75} />
-              </div>
-              <h3 className="mt-6 text-3xl font-bold">{c.title}</h3>
-              <p className="mt-3 flex-1 text-lg text-foreground/80">{c.text}</p>
-              <Link to={c.to} search={c.search as never} className="mt-6 rounded-xl border-2 border-primary px-7 py-3 text-lg font-bold text-primary hover:bg-primary hover:text-primary-foreground">{c.cta}</Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <footer className="px-5 pt-10 text-foreground">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-2 gap-x-6">
-            <FooterGroup title="Rentals" links={[["For rent", { purpose: "rent" }], ["Apartments", { category: "Apartments" }], ["Shops", { category: "Shops" }], ["Event halls", { category: "Event Halls" }]]} />
-            <FooterGroup title="For sale" links={[["For sale", { purpose: "sale" }], ["Houses", { category: "Houses" }], ["Land", { category: "Land" }], ["Malls", { category: "Malls" }]]} />
-            <FooterGroup title="Popular states" links={["Lagos", "Abuja", "Rivers", "Oyo", "Ogun"].map((s) => [s, { state: s }] as [string, Record<string, string>])} />
-            <FooterGroup title="Spaces" links={[["Office spaces", { category: "Office Spaces" }], ["Other spaces", { category: "Other Spaces" }], ["All properties", {}]]} />
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-y-5 border-t border-border py-8 text-lg">
-            <Link to="/how-it-works">How it works</Link>
-            <Link to="/terms">Terms of use</Link>
-            <Link to="/landlords">For landlords</Link>
-            <Link to="/privacy">Privacy notice</Link>
-            <Link to="/help">Help</Link>
-            <Link to="/contact">Contact us</Link>
-          </div>
-          <p className="border-t border-border py-6 text-center text-sm text-muted-foreground">© 2026 RentReady. Connecting Properties, People, and Opportunities.</p>
-        </div>
-      </footer>
-
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card py-2 text-xs text-muted-foreground lg:hidden">
-        <BottomItem to="/listings" icon={Search} label="Search" />
-        <BottomItem to="/listings" icon={Heart} label="Saved" />
-        <BottomItem to="/post" icon={Plus} label="Post" />
-        <BottomItem to="/messages" icon={MessageSquare} label="Inbox" />
-        <BottomItem to="/dashboard" icon={User} label="Account" />
-      </nav>
-    </div>
-  );
+  const { data: featured = [], isLoading } = useQuery({
+    queryKey: ["home-featured-approved-listings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listings").select(LISTING_COLS)
+        .eq("status", "approved").eq("availability_status", "available").eq("is_sample", false).not("image_url", "is", null)
+        .order("sponsored", { ascending: false }).order("created_at", { ascending: false }).limit(6);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  return <div className="min-h-screen bg-white text-slate-900">
+    <SiteHeader home />
+    <section className="relative flex min-h-[580px] items-center overflow-hidden bg-slate-100 sm:min-h-[640px]">
+      <HeroBackdrop />
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-5 py-16 text-center md:py-24">
+        <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">Find the perfect place to call <span className="text-emerald-300">home</span></h1>
+        <p className="mt-5 max-w-3xl text-base leading-relaxed text-white/90 sm:text-lg md:text-xl">Discover homes, shops and spaces to rent or buy across Nigeria.</p>
+        <HeroSearch />
+      </div>
+    </section>
+    <section className="mx-auto max-w-7xl px-5 py-16 md:py-20">
+      <Heading eyebrow="Explore RentReady" title="Find your next space" text="Browse property types and find a place that fits your next move." />
+      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{CATEGORIES.map((c) => <Link key={c.name} to="/listings" search={{ category: c.name }} className="group overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+        <img src={c.img} alt="" loading="lazy" className="h-40 w-full object-cover" /><div className="flex items-center justify-between p-4"><div><h3 className="font-semibold">{c.name}</h3><p className="mt-1 text-sm text-muted-foreground">{c.sub}</p></div><ArrowRight className="h-5 w-5 text-[#0B3D2E]" /></div>
+      </Link>)}</div>
+    </section>
+    <section className="bg-slate-50 px-5 py-16 md:py-20"><div className="mx-auto max-w-7xl">
+      <div className="flex flex-wrap items-end justify-between gap-4"><Heading eyebrow="Current RentReady listings" title="Featured properties" text="Browse approved properties currently listed on RentReady." /><Link to="/listings" className="mb-1 inline-flex items-center gap-2 font-semibold text-[#2563EB]">View all properties <ArrowRight className="h-4 w-4" /></Link></div>
+      {isLoading ? <p className="mt-8 text-slate-600">Loading approved properties…</p> : featured.length ? <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{featured.map((listing) => <HomeListingCard key={listing.id} listing={listing} />)}</div> :
+      <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center"><Building2 className="mx-auto h-9 w-9 text-[#0B3D2E]" /><h3 className="mt-4 text-lg font-semibold">No approved properties to feature yet</h3><p className="mt-2 text-sm text-slate-600">Browse all properties or check back later.</p><Button asChild className="mt-5 bg-[#2563EB] text-white hover:bg-[#1D4ED8]"><Link to="/listings">Browse properties</Link></Button></div>}
+    </div></section>
+    <section className="px-5 py-16 md:py-20"><div className="mx-auto grid max-w-7xl items-center gap-10 rounded-3xl bg-[#0B3D2E] px-7 py-10 text-white sm:px-12 md:grid-cols-[1fr_auto] md:py-14">
+      <div><p className="text-sm font-semibold uppercase tracking-widest text-white/75">For property owners</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">List your property</h2><p className="mt-4 max-w-2xl text-white/85">Add your property to RentReady and connect directly with people looking for a place in Nigeria.</p></div><Button asChild className="h-12 bg-white px-6 font-semibold text-[#0B3D2E] hover:bg-white/90"><Link to="/post">Post Property <ArrowRight /></Link></Button>
+    </div></section>
+    <section className="bg-slate-50 px-5 py-16 md:py-20"><div className="mx-auto max-w-7xl"><Heading eyebrow="A simpler way to find your next place" title="Why choose RentReady" text="Straightforward property search, with the tools you need to make your next move." />
+      <div className="mt-9 grid gap-5 md:grid-cols-3"><Reason icon={Search} title="Search across Nigeria" text="Explore properties by location, purpose and property type." /><Reason icon={MessageCircle} title="Connect directly" text="Contact property owners through RentReady to ask questions and arrange a viewing." /><Reason icon={ShieldCheck} title="Reviewed listings" text="Approved listings are reviewed before they appear as live properties." /></div>
+    </div></section>
+    <section className="px-5 py-16 md:py-20"><div className="mx-auto max-w-7xl"><Heading eyebrow="A clear path to your next move" title="How it works" text="Find a property and arrange your next step through RentReady." />
+      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{[
+        { icon: Search, title: "Search", text: "Choose an area, property type, and whether you want to buy, rent, or book a short let." },
+        { icon: Building2, title: "Explore", text: "Compare photos, prices, and locations in approved listings." },
+        { icon: MessageCircle, title: "Contact", text: "Ask the property owner questions through RentReady." },
+        { icon: MapPin, title: "Arrange viewing", text: "Request a time to see the property in person." },
+      ].map((step, index) => <HowStep key={step.title} icon={step.icon} title={step.title} text={step.text} index={index + 1} />)}</div>
+    </div></section>
+    <SiteFooter />
+  </div>;
 }
-
-function FooterGroup({ title, links }: { title: string; links: [string, Record<string, string>][] }) {
-  return (
-    <details className="group py-3">
-      <summary className="flex cursor-pointer list-none items-center justify-between text-lg">
-        {title} <ChevronDown className="h-5 w-5 text-primary transition group-open:rotate-180" />
-      </summary>
-      <ul className="mt-2 space-y-2 text-muted-foreground">
-        {links.map(([label, s]) => (
-          <li key={label}><Link to="/listings" search={s as never}>{label}</Link></li>
-        ))}
-      </ul>
-    </details>
-  );
+function Heading({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
+  return <div><p className="text-sm font-semibold uppercase tracking-widest text-[#2563EB]">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold sm:text-4xl">{title}</h2><p className="mt-3 max-w-2xl text-slate-600">{text}</p></div>;
 }
-
-function BottomItem({ to, icon: Icon, label }: { to: "/listings" | "/post" | "/messages" | "/dashboard"; icon: LucideIcon; label: string }) {
-  return (
-    <Link to={to} className="flex flex-col items-center gap-1">
-      <Icon className="h-6 w-6 text-foreground/70" />
-      {label}
-    </Link>
-  );
+function Reason({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text: string }) {
+  return <article className="rounded-2xl border border-slate-200 bg-white p-6"><span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0B3D2E]/10 text-[#0B3D2E]"><Icon className="h-6 w-6" /></span><h3 className="mt-5 text-lg font-semibold">{title}</h3><p className="mt-2 leading-relaxed text-slate-600">{text}</p></article>;
+}
+function HowStep({ icon: Icon, title, text, index }: { icon: LucideIcon; title: string; text: string; index: number }) {
+  return <article className="rounded-2xl border border-slate-200 bg-white p-6"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2563EB] text-sm font-bold text-white">{index}</span><Icon className="mt-5 h-6 w-6 text-[#0B3D2E]" /><h3 className="mt-3 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p></article>;
 }
 function HeroSearch() {
   const navigate = useNavigate();
-  const [q, setQ] = useState("");
-  function search(e: React.FormEvent) {
+  const [purpose, setPurpose] = useState("sale");
+  const [location, setLocation] = useState("");
+  function search(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const v = q.trim();
-    const [city = "", st] = v.split(",").map((s) => s.trim());
-    const stateMatch = STATES.find((s) => s.toLowerCase() === (st ?? city).toLowerCase());
-    if (!v) void navigate({ to: "/listings" });
-    else if (st && stateMatch) void navigate({ to: "/listings", search: { state: stateMatch, city } });
-    else if (stateMatch) void navigate({ to: "/listings", search: { state: stateMatch } });
-    else void navigate({ to: "/listings", search: { q: v } });
+    void navigate({ to: "/listings", search: { purpose, q: location.trim() || undefined } });
   }
-  return (
-    <form onSubmit={search} className="mt-8 flex w-full items-center rounded-xl border border-border bg-card px-5 py-1.5 text-card-foreground shadow-card">
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="State, area, street or keyword" aria-label="Search location" autoComplete="off" className="w-full bg-transparent py-3 text-base outline-none" />
-      <Button type="submit" variant="ghost" size="icon" aria-label="Search"><Search strokeWidth={2.5} /></Button>
-    </form>
-  );
+  return <form onSubmit={search} className="mt-9 w-full max-w-4xl rounded-2xl bg-white p-3 text-left shadow-xl ring-1 ring-slate-200 sm:mt-10 sm:p-4">
+    <div className="flex gap-1 border-b border-slate-200 pb-3" role="tablist" aria-label="Property purpose">{([['sale', 'Buy'], ['rent', 'Rent'], ['short-let', 'Short Let']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={purpose === value} onClick={() => setPurpose(value)} className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${purpose === value ? "bg-[#0B3D2E] text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>)}</div>
+    <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+      <label className="flex h-12 items-center gap-3 rounded-xl border border-slate-300 px-4 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/20"><MapPin className="h-5 w-5 shrink-0 text-[#0B3D2E]" /><input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Enter city, area, or state..." aria-label="Enter city, area, or state" autoComplete="off" className="min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-500" /></label>
+      <Button type="submit" className="h-12 rounded-xl bg-[#2563EB] px-8 text-white hover:bg-[#1D4ED8]"><Search className="h-4 w-4" />Search</Button>
+    </div>
+  </form>;
+}
+
+function HomeListingCard({ listing }: { listing: Listing }) {
+  const purposeLabel = listing.purpose === "sale" ? "For Sale" : listing.purpose === "short-let" || listing.purpose === "short_let" ? "Short Let" : "For Rent";
+  return <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <Link to="/listings/$id" params={{ id: listing.id }} className="block">
+      <div className="relative"><img src={listingImage(listing)} alt={listing.title} loading="lazy" className="aspect-[16/10] w-full object-cover" /><span className="absolute left-3 top-3 rounded-md bg-white px-3 py-1 text-xs font-semibold text-[#0B3D2E]">{purposeLabel}</span></div>
+      <div className="p-4"><p className="text-xl font-bold text-[#0B3D2E]">{formatNaira(listing.price)} <span className="text-sm font-normal text-slate-600">{PERIODS[listing.price_period]}</span></p><h3 className="mt-2 line-clamp-2 font-semibold text-slate-900">{listing.title}</h3><p className="mt-2 text-sm text-slate-600">{listing.state} · {listing.city}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#2563EB]">View Property <ArrowRight className="h-4 w-4" /></span></div>
+    </Link>
+  </article>;
 }

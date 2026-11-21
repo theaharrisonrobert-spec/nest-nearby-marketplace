@@ -108,7 +108,8 @@ function PostPage() {
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-5 py-8">
         <h1 className="text-3xl font-bold">Post a Property</h1>
-        <p className="mt-1 text-muted-foreground">You set the price. Posting is free. Every listing is reviewed by our team before it goes live. Your phone number is never shown publicly.</p>
+        <p className="mt-1 text-muted-foreground">You set the price. Posting is free. No agent or agreement fee — tenants connect directly with you. Every listing is reviewed before it goes live, and your phone number is not shown publicly.</p>
+        <span className="mt-3 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">✅ No Agent Fee — Direct to Landlord</span>
         <form key={profile ? "p" : "n"} onSubmit={onSubmit} className="mt-6 grid gap-4 rounded-xl bg-card p-6 shadow-card sm:grid-cols-2">
           <div className="sm:col-span-2"><label className={label}>Title</label><input name="title" required placeholder="e.g. 2 Bedroom Flat in Yaba" className={input} /></div>
           <div><label className={label}>Property type</label>

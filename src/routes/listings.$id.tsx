@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Bath, BedDouble, CalendarClock, CheckCircle2, Flag, Landmark, MapPin, Send, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ function Detail() {
   const [msg, setMsg] = useState("");
   const [when, setWhen] = useState("");
   const [note, setNote] = useState("");
+  const [requestCode, setRequestCode] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -56,17 +57,45 @@ function Detail() {
       return (await supabase.rpc("owner_badges", { _owner: l.owner_id })).data?.[0] ?? null;
     },
   });
+  const { data: premiumLandlord } = useQuery({
+    queryKey: ["premium-landlord", l?.owner_id],
+    enabled: !!l?.owner_id,
+    queryFn: async () => l?.owner_id ? (await supabase.rpc("is_verified_premium_landlord", { _owner: l.owner_id })).data ?? false : false,
+  });
   const { data: address } = useQuery({
     queryKey: ["address", id],
     queryFn: async () => (await supabase.rpc("listing_address", { _id: id })).data ?? null,
   });
+  const { data: phoneVerified } = useQuery({
+    queryKey: ["phone-verified", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return false;
+      const { data, error } = await supabase.from("profiles").select("phone_verified_at").eq("id", user.id).maybeSingle();
+      if (error) throw error;
+      return !!data?.phone_verified_at;
+    },
+  });
+  const { data: approvalProfile } = useQuery({
+    queryKey: ["listing-contact-approval", user?.id],
+    enabled: !!user,
+    queryFn: async () => user ? (await supabase.from("profiles").select("approval_status, is_blocked").eq("id", user.id).maybeSingle()).data : null,
+  });
+  const canAct = !!user && approvalProfile?.approval_status === "approved" && !approvalProfile.is_blocked;
+  useEffect(() => {
+    if (!user || !l?.owner_id || l.owner_id === user.id) return;
+    const key = `rentready-viewed:${user.id}:${l.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void supabase.rpc("record_listing_view", { _listing_id: l.id });
+  }, [l?.id, l?.owner_id, user?.id]);
 
   const isOwner = !!user && user.id === l?.owner_id;
   const canContact = !!l?.owner_id && !isOwner;
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !l?.owner_id) return;
+    if (!user || !l?.owner_id || !canAct) return;
     const body = msg.trim();
     if (!body || body.length > 2000) { toast.error("Write a message (up to 2000 characters)"); return; }
     setBusy(true);
@@ -79,15 +108,15 @@ function Detail() {
 
   async function requestViewing(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !l?.owner_id) return;
+    if (!user || !l?.owner_id || !canAct) return;
     const d = new Date(when);
     if (!when || isNaN(+d) || d < new Date()) { toast.error("Pick a future date and time"); return; }
     setBusy(true);
-    const { error } = await supabase.from("viewings").insert({ listing_id: l.id, owner_id: l.owner_id, requester_id: user.id, requested_at: d.toISOString(), note: note.trim().slice(0, 500) || null });
+    const { data, error } = await supabase.from("viewings").insert({ listing_id: l.id, owner_id: l.owner_id, requester_id: user.id, requested_at: d.toISOString(), note: note.trim().slice(0, 500) || null, status: "requested" }).select("viewing_code").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    setWhen(""); setNote("");
-    toast.success("Viewing requested. The owner will accept, decline or suggest another time.");
+    setWhen(""); setNote(""); setRequestCode(data.viewing_code);
+    toast.success("Request sent! Waiting for the landlord to accept.");
   }
 
   async function report(e: React.FormEvent<HTMLFormElement>) {
@@ -98,6 +127,12 @@ function Detail() {
     if (error) { toast.error(error.message); return; }
     setReportOpen(false);
     toast.success("Thank you. Our team will review this listing.");
+  }
+  async function reportAsRented() {
+    if (!user || !canAct || !l) return;
+    const { error } = await supabase.from("reports").insert({ listing_id: l.id, reporter_id: user.id, reason: "unavailable", details: "Reported as rented / no longer available." });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Thanks. We’ll check whether this property is still available.");
   }
 
   const card = "rounded-xl bg-card p-6 shadow-card";
@@ -126,6 +161,8 @@ function Detail() {
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">{l.purpose === "sale" ? "For Sale" : "For Rent"}</span>
                   {l.sponsored && <span className="rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">Sponsored</span>}
+                  {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-orange-500 px-2 py-1 text-xs font-semibold text-white">Featured</span>}
+                  <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">No Agent Fee</span>
                   <span className="text-xs leading-6 text-muted-foreground">{l.category}</span>
                 </div>
                 <div className="mt-3 text-3xl font-bold text-primary">{formatNaira(l.price)} <span className="text-base font-normal text-foreground">{PERIODS[l.price_period]}</span>
@@ -169,8 +206,9 @@ function Detail() {
             <aside className="h-fit space-y-4 lg:sticky lg:top-6">
               <div className={card}>
                 <div className="text-sm text-muted-foreground">Listed by</div>
-                <div className="text-lg font-semibold">{badges?.agency_name || l.contact_name || "Property owner"}</div>
+                <div className="text-lg font-semibold">{l.contact_name || "Property owner"}</div>
                 <TrustBadges identity={!!badges?.identity_verified} agency={!!badges?.agency_verified} reviewed={l.details_reviewed} accountType={badges?.account_type} />
+                {premiumLandlord && <span className="mt-2 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Verified Premium Landlord</span>}
               </div>
 
               {isOwner ? (
@@ -180,20 +218,30 @@ function Detail() {
                   <form onSubmit={sendMessage} className={card}>
                     <h2 className="font-bold">Interested in this property?</h2>
                     <p className="mt-1 text-xs text-muted-foreground">Messages are private — nobody's phone number is shown publicly.</p>
-                    {user ? (
+                    {user && canAct ? (
                       <>
                         <textarea value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={2000} rows={3} placeholder="Hi, I'm interested in this property…" className={`${input} mt-3`} />
                         <button disabled={busy} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60"><Send className="h-4 w-4" />Send Message</button>
                       </>
-                    ) : <div className="mt-3">{signInCta("message the owner")}</div>}
+                    ) : user ? <Link to="/approval-status" className="mt-3 block rounded-lg bg-muted px-3 py-3 text-sm">Your profile must be approved before you can message a landlord.</Link> : <div className="mt-3">{signInCta("message the owner")}</div>}
                   </form>
                   <form onSubmit={requestViewing} className={card}>
-                    <h2 className="flex items-center gap-2 font-bold"><CalendarClock className="h-5 w-5 text-primary" />Request a viewing</h2>
-                    {user ? (
-                      <>
-                        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={`${input} mt-3`} />
-                        <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="Note for the owner (optional)" className={`${input} mt-2`} />
-                        <button disabled={busy} className="mt-3 w-full rounded-lg border border-primary py-3 font-medium text-primary disabled:opacity-60">Request Viewing</button>
+                    <h2 className="flex items-center gap-2 text-lg font-bold"><CalendarClock className="h-5 w-5 text-primary" />Request Viewing</h2>
+                    <p className="mt-1 text-sm text-primary">No agent fee. You will meet the landlord directly.</p>
+                    {user && !canAct ? <Link to="/approval-status" className="mt-3 block rounded-lg bg-muted px-3 py-3 text-sm">Your profile must be approved before you can request a viewing.</Link> : user ? phoneVerified === undefined ? <p className="mt-3 text-sm text-muted-foreground">Checking your phone verification…</p> : !phoneVerified ? (
+                      <div className="mt-3 rounded-lg bg-muted p-3 text-sm"><p>Verify your phone before requesting a viewing.</p><Link to="/verify-phone" className="mt-2 inline-block font-semibold text-primary underline">Verify phone by SMS</Link></div>
+                    ) : (
+                      requestCode ? (
+                        <div className="mt-4 rounded-lg bg-brand-soft p-4" role="status">
+                          <p className="font-semibold text-primary">Request Sent! Waiting for landlord to accept.</p>
+                          <p className="mt-1 text-sm">Your Viewing Code: <strong>{requestCode}</strong></p>
+                          <p className="mt-1 text-xs text-muted-foreground">The code will be shared with both of you when the landlord accepts.</p>
+                        </div>
+                      ) : <>
+                        <label htmlFor="viewing-date" className="mt-3 block text-sm font-medium">Choose a date and time</label>
+                        <input id="viewing-date" type="datetime-local" required min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)} value={when} onChange={(e) => setWhen(e.target.value)} className={`${input} mt-1`} />
+                        <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="Note for the landlord (optional)" className={`${input} mt-2`} />
+                        <button disabled={busy} className="mt-3 w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60">{busy ? "Sending request…" : "Request Viewing"}</button>
                       </>
                     ) : <div className="mt-3">{signInCta("request a viewing")}</div>}
                   </form>
@@ -202,15 +250,15 @@ function Detail() {
 
               <div className={card}>
                 <p className="text-xs text-muted-foreground">Safety tip: always inspect a property in person and confirm ownership documents before paying any money.</p>
-                {!isOwner && (user ? (
+                {!isOwner && (user && canAct ? (
                   reportOpen ? (
                     <form onSubmit={report} className="mt-3 space-y-2">
                       <select name="reason" className={input}>{REASONS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>
                       <textarea name="details" maxLength={1000} rows={2} placeholder="Tell us more (optional)" className={input} />
                       <div className="flex gap-2"><button className="flex-1 rounded-lg bg-destructive py-2 text-sm font-medium text-destructive-foreground">Submit report</button><button type="button" onClick={() => setReportOpen(false)} className="rounded-lg border border-border px-3 text-sm">Cancel</button></div>
                     </form>
-                  ) : <button onClick={() => setReportOpen(true)} className="mt-3 flex items-center gap-2 text-sm font-medium text-destructive"><Flag className="h-4 w-4" />Report this listing</button>
-                ) : <Link to="/auth" search={{ mode: "signin", next: `/listings/${id}` }} className="mt-3 flex items-center gap-2 text-sm font-medium text-destructive"><Flag className="h-4 w-4" />Sign in to report</Link>)}
+                  ) : <div className="mt-3 flex flex-wrap gap-4"><button onClick={() => void reportAsRented()} className="flex items-center gap-2 text-sm font-medium text-destructive"><Flag className="h-4 w-4" />Report as Rented</button><button onClick={() => setReportOpen(true)} className="flex items-center gap-2 text-sm font-medium text-destructive"><Flag className="h-4 w-4" />Report this listing</button></div>
+                ) : user ? <Link to="/approval-status" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">Approval is required to report a listing</Link> : <Link to="/auth" search={{ mode: "signin", next: `/listings/${id}` }} className="mt-3 flex items-center gap-2 text-sm font-medium text-destructive"><Flag className="h-4 w-4" />Sign in to report</Link>)}
               </div>
             </aside>
           </div>

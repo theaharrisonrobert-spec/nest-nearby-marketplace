@@ -41,6 +41,7 @@ export type Database = {
       listings: {
         Row: {
           address: string | null
+          availability_status: string
           amenities: string[]
           bathrooms: number | null
           bedrooms: number | null
@@ -51,6 +52,8 @@ export type Database = {
           created_at: string
           description: string | null
           details_reviewed: boolean
+          featured_until: string | null
+          early_access_until: string | null
           id: string
           image_url: string | null
           is_sample: boolean
@@ -59,6 +62,7 @@ export type Database = {
           owner_id: string | null
           price: number
           price_period: string
+          rejection_reason: string | null
           promotion_requested: boolean
           purpose: string
           show_address: boolean
@@ -70,6 +74,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          availability_status?: string
           amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
@@ -80,6 +85,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           details_reviewed?: boolean
+          featured_until?: string | null
+          early_access_until?: string | null
           id?: string
           image_url?: string | null
           is_sample?: boolean
@@ -88,6 +95,7 @@ export type Database = {
           owner_id?: string | null
           price: number
           price_period?: string
+          rejection_reason?: string | null
           promotion_requested?: boolean
           purpose?: string
           show_address?: boolean
@@ -99,6 +107,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          availability_status?: string
           amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
@@ -109,6 +118,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           details_reviewed?: boolean
+          featured_until?: string | null
+          early_access_until?: string | null
           id?: string
           image_url?: string | null
           is_sample?: boolean
@@ -117,6 +128,7 @@ export type Database = {
           owner_id?: string | null
           price?: number
           price_period?: string
+          rejection_reason?: string | null
           promotion_requested?: boolean
           purpose?: string
           show_address?: boolean
@@ -169,6 +181,9 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          account_review_required: boolean
+          approval_status: string
+          approved_at: string | null
           agency_name: string | null
           agency_verified: boolean
           created_at: string
@@ -177,12 +192,23 @@ export type Database = {
           id_document_path: string | null
           id_number: string | null
           id_type: string | null
+          is_blocked: boolean
           phone: string | null
+          phone_verified_at: string | null
+          rejection_reason: string | null
+          professional_type: string | null
+          property_location: string | null
+          property_count: string | null
+          role_selected: boolean
           verification_status: string
           verified_at: string | null
+          verification_fee_paid: boolean
         }
         Insert: {
           account_type?: string
+          account_review_required?: boolean
+          approval_status?: string
+          approved_at?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -191,12 +217,23 @@ export type Database = {
           id_document_path?: string | null
           id_number?: string | null
           id_type?: string | null
+          is_blocked?: boolean
           phone?: string | null
+          phone_verified_at?: string | null
+          rejection_reason?: string | null
+          professional_type?: string | null
+          property_location?: string | null
+          property_count?: string | null
+          role_selected?: boolean
           verification_status?: string
           verified_at?: string | null
+          verification_fee_paid?: boolean
         }
         Update: {
           account_type?: string
+          account_review_required?: boolean
+          approval_status?: string
+          approved_at?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -205,9 +242,17 @@ export type Database = {
           id_document_path?: string | null
           id_number?: string | null
           id_type?: string | null
+          is_blocked?: boolean
           phone?: string | null
+          phone_verified_at?: string | null
+          rejection_reason?: string | null
+          professional_type?: string | null
+          property_location?: string | null
+          property_count?: string | null
+          role_selected?: boolean
           verification_status?: string
           verified_at?: string | null
+          verification_fee_paid?: boolean
         }
         Relationships: []
       }
@@ -249,6 +294,39 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          category: string
+          contact_email: string | null
+          created_at: string
+          details: string
+          id: string
+          page_url: string | null
+          resolved_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          contact_email?: string | null
+          created_at?: string
+          details: string
+          id?: string
+          page_url?: string | null
+          resolved_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          contact_email?: string | null
+          details?: string
+          page_url?: string | null
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -272,34 +350,46 @@ export type Database = {
           created_at: string
           id: string
           listing_id: string
+          viewing_code: string | null
           note: string | null
           owner_id: string
           proposed_at: string | null
           requested_at: string
           requester_id: string
           status: string
+          started_at: string | null
+          landlord_completed_at: string | null
+          tenant_completed_at: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           listing_id: string
+          viewing_code?: string | null
           note?: string | null
           owner_id: string
           proposed_at?: string | null
           requested_at: string
           requester_id: string
           status?: string
+          started_at?: string | null
+          landlord_completed_at?: string | null
+          tenant_completed_at?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           listing_id?: string
+          viewing_code?: string | null
           note?: string | null
           owner_id?: string
           proposed_at?: string | null
           requested_at?: string
           requester_id?: string
           status?: string
+          started_at?: string | null
+          landlord_completed_at?: string | null
+          tenant_completed_at?: string | null
         }
         Relationships: [
           {
@@ -310,6 +400,140 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      viewing_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_polite: boolean | null
+          overall_stars: number
+          price_same: boolean | null
+          property_real: boolean | null
+          ratee_id: string
+          rater_id: string
+          tenant_serious: boolean | null
+          tenant_showed_up: boolean | null
+          viewing_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_polite?: boolean | null
+          overall_stars: number
+          price_same?: boolean | null
+          property_real?: boolean | null
+          ratee_id: string
+          rater_id: string
+          tenant_serious?: boolean | null
+          tenant_showed_up?: boolean | null
+          viewing_id: string
+        }
+        Update: { overall_stars?: number }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          amount_ngn: number
+          billing_email: string
+          cancel_at_period_end: boolean
+          created_at: string
+          ends_at: string | null
+          id: string
+          last_charge_reference: string | null
+          provider_subscription_code: string | null
+          provider_subscription_token: string | null
+          listing_id: string | null
+          plan: string
+          provider: string
+          provider_reference: string
+          starts_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_ngn: number
+          billing_email: string
+          cancel_at_period_end?: boolean
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          last_charge_reference?: string | null
+          provider_subscription_code?: string | null
+          provider_subscription_token?: string | null
+          listing_id?: string | null
+          plan: string
+          provider?: string
+          provider_reference: string
+          starts_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: { ends_at?: string | null; starts_at?: string | null; status?: string; last_charge_reference?: string | null; cancel_at_period_end?: boolean; provider_subscription_code?: string | null; provider_subscription_token?: string | null }
+        Relationships: []
+      }
+      tenant_subscriptions: {
+        Row: {
+          amount: number
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          email: string
+          id: string
+          paystack_authorization_code: string | null
+          paystack_reference: string
+          paystack_subscription_code: string | null
+          paystack_subscription_token: string | null
+          plan: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          email: string
+          id?: string
+          paystack_authorization_code?: string | null
+          paystack_reference: string
+          paystack_subscription_code?: string | null
+          paystack_subscription_token?: string | null
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cancel_at_period_end?: boolean
+          current_period_end?: string | null
+          paystack_authorization_code?: string | null
+          paystack_reference?: string
+          paystack_subscription_code?: string | null
+          paystack_subscription_token?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      listing_views: {
+        Row: { created_at: string; id: string; listing_id: string; viewer_id: string | null }
+        Insert: { created_at?: string; id?: string; listing_id: string; viewer_id?: string | null }
+        Update: { created_at?: string; id?: string; listing_id?: string; viewer_id?: string | null }
+        Relationships: []
+      }
+      tenant_alert_preferences: {
+        Row: { user_id: string; areas: string[]; min_budget: number | null; max_budget: number | null; updated_at: string }
+        Insert: { user_id: string; areas?: string[]; min_budget?: number | null; max_budget?: number | null; updated_at?: string }
+        Update: { areas?: string[]; min_budget?: number | null; max_budget?: number | null; updated_at?: string }
+        Relationships: []
+      }
+      tenant_alert_matches: {
+        Row: { id: string; user_id: string; listing_id: string; created_at: string; seen_at: string | null }
+        Insert: { id?: string; user_id: string; listing_id: string; created_at?: string; seen_at?: string | null }
+        Update: { seen_at?: string | null }
+        Relationships: []
       }
     }
     Views: {
@@ -341,6 +565,25 @@ export type Database = {
         }[]
       }
       record_sign_in: { Args: { _method?: string }; Returns: undefined }
+      respond_to_viewing: { Args: { _viewing_id: string; _accept: boolean }; Returns: undefined }
+      start_viewing: { Args: { _viewing_id: string }; Returns: undefined }
+      complete_viewing: { Args: { _viewing_id: string }; Returns: undefined }
+      user_has_active_plan: { Args: { _user_id: string; _plan: string }; Returns: boolean }
+      record_listing_view: { Args: { _listing_id: string }; Returns: undefined }
+      record_site_visit: { Args: Record<PropertyKey, never>; Returns: undefined }
+      admin_site_visit_count: { Args: Record<PropertyKey, never>; Returns: number }
+      is_verified_landlord: { Args: { _owner: string }; Returns: boolean }
+      first_free_landlord_listing: { Args: { _owner: string }; Returns: string | null }
+      expire_listing_features: { Args: Record<PropertyKey, never>; Returns: undefined }
+      current_user_has_tenant_premium: { Args: Record<PropertyKey, never>; Returns: boolean }
+      current_user_has_landlord_premium: { Args: Record<PropertyKey, never>; Returns: boolean }
+      is_verified_premium_landlord: { Args: { _owner: string }; Returns: boolean }
+      premium_listing_viewers: { Args: Record<PropertyKey, never>; Returns: { listing_id: string; viewer_id: string | null; viewer_name: string | null; viewed_at: string }[] }
+      profile_can_act: { Args: { _user_id: string }; Returns: boolean }
+      admin_dashboard_stats: { Args: Record<PropertyKey, never>; Returns: Json }
+      admin_user_directory: { Args: { _search?: string | null }; Returns: { id: string; email: string; full_name: string | null; phone: string | null; account_type: string; approval_status: string; rejection_reason: string | null; is_blocked: boolean; created_at: string }[] }
+      admin_premium_subscriptions: { Args: Record<PropertyKey, never>; Returns: { user_email: string; full_name: string | null; plan: string; status: string; amount_ngn: number; created_at: string; ends_at: string | null }[] }
+      owner_listing_view_count: { Args: Record<PropertyKey, never>; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"

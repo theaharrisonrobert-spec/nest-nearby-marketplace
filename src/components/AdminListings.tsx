@@ -28,13 +28,19 @@ export function AdminListings() {
     },
   });
 
-  async function update(id: string, patch: { status?: string; details_reviewed?: boolean; sponsored?: boolean; promotion_requested?: boolean }) {
+  async function update(id: string, patch: { status?: string; rejection_reason?: string | null; details_reviewed?: boolean; sponsored?: boolean; promotion_requested?: boolean }) {
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Listing updated");
     qc.invalidateQueries({ queryKey: ["admin-pending-listings"] });
     qc.invalidateQueries({ queryKey: ["admin-live-listings"] });
     qc.invalidateQueries({ queryKey: ["admin-promotions"] });
+  }
+  async function rejectListing(id: string) {
+    const reason = window.prompt("Choose a rejection reason: Fake listing / Incomplete / Suspicious / Other", "Incomplete");
+    if (reason === null) return;
+    const normalized = ["Fake listing", "Incomplete", "Suspicious", "Other"].includes(reason) ? reason : "Other";
+    await update(id, { status: "rejected", rejection_reason: normalized });
   }
   async function resolve(id: string) {
     await supabase.from("reports").update({ resolved: true }).eq("id", id);
@@ -58,9 +64,9 @@ export function AdminListings() {
             <div><Link to="/listings/$id" params={{ id: l.id }} className="font-medium hover:text-primary">{l.title}</Link>
               <div className="text-xs text-muted-foreground">{formatNaira(l.price)} · {l.city}, {l.state} · {l.category}</div></div>
             <div className="flex gap-2">
-              <button onClick={() => update(l.id, { status: "approved" })} className={`${btn} bg-primary text-primary-foreground`}>Approve</button>
-              <button onClick={() => update(l.id, { status: "approved", details_reviewed: true })} className={`${btn} border border-primary text-primary`}>Approve + details reviewed</button>
-              <button onClick={() => update(l.id, { status: "rejected" })} className={`${btn} border border-destructive text-destructive`}>Reject</button>
+              <button onClick={() => update(l.id, { status: "approved", rejection_reason: null })} className={`${btn} bg-primary text-primary-foreground`}>Approve</button>
+              <button onClick={() => update(l.id, { status: "approved", rejection_reason: null, details_reviewed: true })} className={`${btn} border border-primary text-primary`}>Approve + details reviewed</button>
+              <button onClick={() => void rejectListing(l.id)} className={`${btn} border border-destructive text-destructive`}>Reject</button>
             </div>
           </div>
         ))}

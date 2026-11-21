@@ -6,11 +6,20 @@ export function useSession() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    // Subscribe first so an OAuth callback's INITIAL_SESSION/SIGNED_IN event
+    // cannot be missed while getSession() is initializing the client.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
+    supabase.auth.getSession().then(({ data: sessionData, error }) => {
+      if (error) console.error('[Auth] Could not load session:', error.message);
+      setUser(sessionData.session?.user ?? null);
+      setLoading(false);
+    }).catch((error: unknown) => {
+      console.error('[Auth] Could not load session:', error);
+      setLoading(false);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
   return { user, loading };

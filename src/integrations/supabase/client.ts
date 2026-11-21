@@ -70,6 +70,10 @@ function createSupabaseClient() {
       storage: brokeredPreviewStorage(),
       persistSession: true,
       autoRefreshToken: true,
+      // Use the authorization-code flow. The browser SDK detects the `code`
+      // on the redirect URL, exchanges it for a session, and emits SIGNED_IN.
+      flowType: 'pkce',
+      detectSessionInUrl: (url) => url.pathname.replace(/\/+$/, "") !== "/auth/callback",
     },
   });
 }

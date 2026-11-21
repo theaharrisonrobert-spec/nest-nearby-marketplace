@@ -2,8 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/SiteHeader";
-import skyscraper from "@/assets/skyscraper.jpg";
+import { AuthScene } from "@/components/AuthScene";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -29,35 +28,29 @@ function ResetPasswordPage() {
     const password = String(f.get("password"));
     if (password !== String(f.get("confirm"))) { toast.error("Passwords do not match"); return; }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Password updated — you're signed in");
-    navigate({ to: "/" });
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Password updated — you're signed in");
+      await navigate({ to: "/" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update your password. Request a new reset link and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
+  const input = "h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20";
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <img src={skyscraper} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-ink/70" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex justify-center"><Logo light /></div>
-        <div className="rounded-2xl bg-card p-7 shadow-card sm:p-9">
-          <h1 className="text-2xl font-bold">Choose a new password</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Enter your new password below to regain access to your account.</p>
-          <form onSubmit={onSubmit} className="mt-5 space-y-3">
-            <input name="password" type="password" required minLength={6} placeholder="New password" className={input} />
-            <input name="confirm" type="password" required minLength={6} placeholder="Confirm new password" className={input} />
-            <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
-              {busy ? "Updating…" : "Update password"}
-            </button>
-          </form>
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            <Link to="/auth" search={{ mode: "signin" }} className="font-medium text-primary">Back to sign in</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+    <AuthScene>
+      <h1 className="text-3xl font-bold text-slate-900">Choose a new password</h1>
+      <p className="mt-2 text-sm text-slate-600">Enter a new password to get back into your account.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <label className="block text-sm font-semibold text-slate-800" htmlFor="new-password">New password<input id="new-password" name="password" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
+        <label className="block text-sm font-semibold text-slate-800" htmlFor="confirm-password">Confirm new password<input id="confirm-password" name="confirm" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
+        <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-[#2563EB] font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-60">{busy ? "Updating…" : "Update password"}</button>
+      </form>
+      <p className="mt-5 text-sm text-slate-600"><Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-[#2563EB] hover:underline">Back to sign in</Link></p>
+    </AuthScene>
   );
 }

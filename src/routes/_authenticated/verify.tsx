@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, Clock, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { startPaidPlan } from "@/lib/payments";
 
 export const Route = createFileRoute("/_authenticated/verify")({
   head: () => ({
@@ -23,9 +24,12 @@ type Profile = {
   full_name: string | null;
   verification_status: string;
   id_type: string | null;
+  verification_fee_paid: boolean;
+  phone: string | null;
+  phone_verified_at: string | null;
 };
 
-const ID_TYPES = ["International Passport", "National ID (NIN)", "Driver's License"];
+const ID_TYPES = ["National ID (NIN)"];
 
 function VerifyPage() {
   const { user } = Route.useRouteContext();
@@ -33,13 +37,17 @@ function VerifyPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.from("profiles").select("full_name, verification_status, id_type").eq("id", user.id).maybeSingle()
+    supabase.from("profiles").select("full_name, verification_status, id_type, verification_fee_paid, phone, phone_verified_at").eq("id", user.id).maybeSingle()
       .then(({ data }) => setProfile(data));
   }, [user.id]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    if (!profile?.verification_fee_paid) { toast.error("Pay the one-time ₦1,500 NIN verification fee before submitting your NIN"); return; }
+    const nin = String(f.get("id_number") ?? "").replace(/\D/g, "");
+    if (!profile?.phone_verified_at) { toast.error("Verify your phone number before submitting your NIN"); return; }
+    if (!/^\d{11}$/.test(nin)) { toast.error("Enter a valid 11-digit NIN"); return; }
     const file = f.get("document") as File;
     if (!file || !file.size) { toast.error("Please upload a photo of your ID document"); return; }
     setBusy(true);
@@ -48,7 +56,7 @@ function VerifyPage() {
     if (up.error) { setBusy(false); toast.error("Document upload failed — try again"); return; }
     const { error } = await supabase.from("profiles").update({
       id_type: String(f.get("id_type")),
-      id_number: String(f.get("id_number")),
+      id_number: nin,
       id_document_path: path,
       verification_status: "pending",
     }).eq("id", user.id);
@@ -82,13 +90,21 @@ function VerifyPage() {
             <p className="mt-1 text-sm text-muted-foreground">Your documents are being reviewed. You'll be able to post as soon as you're approved.</p>
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-xl bg-card p-6 shadow-card">
+          <div className="mt-8 space-y-5">
+          {!profile?.phone_verified_at && <section className="rounded-xl bg-card p-6 shadow-card"><h2 className="font-bold">Verify your phone number</h2><p className="mt-1 text-sm text-muted-foreground">Phone verification is required before we can review your NIN.</p><Link to="/verify-phone" className="mt-3 inline-block text-sm font-semibold text-primary underline">Verify phone by SMS</Link></section>}
+          {!profile?.verification_fee_paid && <section className="rounded-xl bg-card p-6 shadow-card"><h2 className="font-bold">One-time NIN verification fee · ₦1,500</h2><p className="mt-1 text-sm text-muted-foreground">This payment does not guarantee approval. RentReady reviews your NIN and phone details before awarding the verification badge.</p><button type="button" onClick={() => void startPaidPlan("nin_verification")} className="mt-4 w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground">Pay ₦1,500 NIN verification fee</button></section>}
+          <form onSubmit={onSubmit} className="space-y-4 rounded-xl bg-card p-6 shadow-card">
+            {!profile?.verification_fee_paid && <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">Submit your NIN after the verification fee payment is confirmed.</p>}
             {status === "rejected" && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
                 <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 Your previous submission was not approved. Please check your details and submit a clear, valid ID again.
               </div>
             )}
+            <div>
+              <label className={label}>Phone number</label>
+              <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">{profile?.phone ?? "Add and verify your phone number"}{profile?.phone_verified_at ? " · Verified" : " · Not verified"}</p>
+            </div>
             <div>
               <label className={label}>ID type</label>
               <select name="id_type" required className={input}>
@@ -97,17 +113,18 @@ function VerifyPage() {
             </div>
             <div>
               <label className={label}>ID number</label>
-              <input name="id_number" required placeholder="e.g. NIN or passport number" className={input} />
+              <input name="id_number" required inputMode="numeric" minLength={11} maxLength={11} placeholder="Enter your 11-digit NIN" className={input} />
             </div>
             <div>
               <label className={label}>Photo of the document</label>
               <input name="document" type="file" required accept="image/*,.pdf" className="text-sm" />
               <p className="mt-1 text-xs text-muted-foreground">A clear photo or scan. Only visible to the review team.</p>
             </div>
-            <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
+            <button disabled={busy || !profile?.verification_fee_paid || !profile?.phone_verified_at} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
               {busy ? "Submitting…" : "Submit for approval"}
             </button>
           </form>
+          </div>
         )}
       </div>
       <SiteFooter />

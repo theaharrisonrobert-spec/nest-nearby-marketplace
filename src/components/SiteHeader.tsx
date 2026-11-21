@@ -1,17 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BadgeCheck, ChevronDown, Home as HomeIcon, Menu, User, X } from "lucide-react";
+import { BadgeCheck, ChevronDown, Heart, Home as HomeIcon, Menu, User, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/listings";
 
-export function Logo({ light = false }: { light?: boolean }) {
-  return <Link to="/" className="flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" strokeWidth={2.5} /><span className={`font-display text-2xl font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>Rent<span className="text-primary">Ready</span></span></Link>;
+export function Logo({ light = false, homeMark = false }: { light?: boolean; homeMark?: boolean }) {
+  return homeMark
+    ? <Link to="/" className="flex shrink-0 items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0B3D2E] text-white"><HomeIcon className="h-6 w-6" strokeWidth={2.5} /></span><span className="font-display text-2xl font-bold text-[#0B3D2E]">RentReady</span></Link>
+    : <Link to="/" className="flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" strokeWidth={2.5} /><span className={"font-display text-2xl font-bold " + (light ? "text-ink-foreground" : "text-foreground")}>Rent<span className="text-primary">Ready</span></span></Link>;
 }
 
-export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
+export function SiteHeader({ overlay = false, home = false }: { overlay?: boolean; home?: boolean }) {
   const [open, setOpen] = useState(false);
   const [account, setAccount] = useState(false);
   const { user } = useSession();
@@ -48,24 +50,35 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   }
   const close = () => { setOpen(false); setAccount(false); };
   return <>
-    <header className={`relative z-40 border-b border-border ${overlay ? "bg-transparent text-ink-foreground" : "bg-card text-card-foreground"}`}>
-      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5">
-        <Button variant="ghost" size="icon" className="justify-self-start" aria-label="Open menu" onClick={() => { setOpen(true); setAccount(false); }}><Menu /></Button>
-        <Logo light={overlay} />
-        {user ? <Button variant="ghost" size="icon" className="justify-self-end rounded-full bg-primary text-primary-foreground hover:bg-primary/90" aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={`justify-self-end px-0 ${overlay ? "text-ink-foreground" : "text-primary"}`}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+    <header className={(home ? "sticky top-0" : "relative") + " z-40 border-b border-border " + (home ? "bg-white text-foreground shadow-sm" : overlay ? "bg-transparent text-ink-foreground" : "bg-card text-card-foreground")}>
+      <div className={home ? "mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-5" : "mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5"}>
+        <Button variant="ghost" size="icon" className={home ? "lg:hidden" : "justify-self-start"} aria-label="Open menu" onClick={() => { setOpen(true); setAccount(false); }}><Menu /></Button>
+        <Logo light={overlay && !home} homeMark={home} />
+        {home && <nav className="hidden items-center gap-5 lg:flex" aria-label="Main navigation">
+          <Link to="/" className="text-sm font-medium hover:text-[#0B3D2E]">Home</Link>
+          <Link to="/listings" search={{ purpose: "sale" }} className="text-sm font-medium hover:text-[#0B3D2E]">Buy</Link>
+          <Link to="/listings" search={{ purpose: "rent" }} className="text-sm font-medium hover:text-[#0B3D2E]">Rent</Link>
+          <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-[#0B3D2E]">Short Let</Link>
+          <Link to="/landlords" className="text-sm font-medium hover:text-[#0B3D2E]">Agents</Link>
+        </nav>}
+        <div className={home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end"}>
+          {home && <Link to="/listings" aria-label="Saved properties" className="hidden text-[#0B3D2E] sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
+          {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {home && <Button asChild className="hidden bg-[#2563EB] text-white hover:bg-[#1D4ED8] sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
+        </div>
       </div>
     </header>
     {open && <div role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-50 overflow-y-auto bg-background text-foreground">
       <div className="grid h-20 grid-cols-[1fr_auto_1fr] items-center border-b border-border px-5"><Button variant="outline" size="icon" aria-label="Close menu" onClick={close}><X /></Button><Logo /><span /></div>
       <nav className="mx-auto max-w-4xl" aria-label="Property navigation">
+        <Link to="/" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Home</Link>
         <Link to="/listings" search={{ purpose: "sale" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Buy</Link>
         <Link to="/listings" search={{ purpose: "rent" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Rent</Link>
-        <details className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">Property types<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2">{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>
-        <Link to="/post" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">List your property</Link>
-        <Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Manage listings & promotions</Link>
-        <Link to="/how-it-works" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">How it works</Link>
-        <Link to="/help" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Get help</Link>
-        {!user && <div className="grid gap-4 px-6 py-6"><Link to="/auth" search={{ mode: "signup", type: "landlord" }} onClick={close}>Landlord sign up</Link><Link to="/auth" search={{ mode: "signup", type: "tenant" }} onClick={close}>Buyer / Tenant sign up</Link></div>}
+        <Link to="/listings" search={{ purpose: "short-let" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Short Let</Link>
+        <Link to="/landlords" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Agents</Link>
+        <Link to="/post" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Post Property</Link>
+        {!user ? <Link to="/auth" search={{ mode: "signin" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Sign in</Link> : <Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">My account</Link>}
+        <details className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">Browse by property type<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2">{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>
       </nav>
     </div>}
     {account && user && <div className="fixed inset-0 z-50 bg-ink/30" onClick={close}><section role="dialog" aria-modal="true" aria-label="Account menu" onClick={e => e.stopPropagation()} className="absolute inset-x-0 top-20 mx-auto max-w-lg rounded-lg bg-card px-5 py-4 text-card-foreground shadow-card">
@@ -110,13 +123,14 @@ export function SiteFooter() {
           <ul className="space-y-2 text-sm text-ink-foreground/70">
             <li><Link to="/landlords" className="hover:text-brand">For Landlords</Link></li>
             <li><Link to="/help" className="hover:text-brand">Help Centre & FAQs</Link></li>
+            
             <li><Link to="/contact" className="hover:text-brand">Contact Us</Link></li>
             <li><Link to="/privacy" className="hover:text-brand">Privacy Policy</Link></li>
             <li><Link to="/terms" className="hover:text-brand">Terms of Service</Link></li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-ink-foreground/10 py-5 text-center text-xs text-ink-foreground/60">© 2026 RentReady. All rights reserved.</div>
+      <div className="border-t border-ink-foreground/10 py-5 text-center text-xs text-ink-foreground/60">© 2026 RentReady.ng All rights reserved.</div>
     </footer>
   );
 }

@@ -13,7 +13,7 @@ export type Listing = Omit<Row, "contact_phone" | "address" | "promotion_request
 
 /** Public columns only — phone and exact address are never readable by visitors. */
 export const LISTING_COLS =
-  "id, owner_id, title, description, category, purpose, price, price_period, negotiable, state, city, bedrooms, bathrooms, size_sqft, image_url, contact_name, created_at, status, is_sample, sponsored, details_reviewed, landmarks, amenities, show_address";
+  "id, owner_id, title, description, category, purpose, price, price_period, negotiable, state, city, bedrooms, bathrooms, size_sqft, image_url, contact_name, created_at, status, availability_status, rejection_reason, is_sample, sponsored, details_reviewed, landmarks, amenities, show_address, featured_until, early_access_until";
 
 export const AMENITIES = ["Furnished", "24/7 Security", "Constant Power", "Borehole Water", "Parking Space", "Swimming Pool", "Gym", "Good Access Road", "Air Conditioning", "Fitted Kitchen"];
 

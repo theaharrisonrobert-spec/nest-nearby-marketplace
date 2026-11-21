@@ -5,10 +5,9 @@ import {
   createRootRouteWithContext,
   useRouter,
   HeadContent,
-  Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,6 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { accountType } from "@/lib/marketplace-rules";
 import { toast } from "sonner";
+import { SupportWidget } from "@/components/SupportWidget";
 
 function NotFoundComponent() {
   return (
@@ -95,33 +95,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const key = "rentready-visit-counted";
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void supabase.rpc("record_site_visit");
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      <HeadContent />
       <Outlet />
       <Toaster />
+      <SupportWidget />
     </QueryClientProvider>
   );
 }

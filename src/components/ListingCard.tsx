@@ -1,15 +1,26 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Bath, BedDouble, Heart, MapPin, Square } from "lucide-react";
 import { type Listing, formatNaira, listingImage, PERIODS } from "@/lib/listings";
+import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ListingCard({ l }: { l: Listing }) {
   const [fav, setFav] = useState(false);
+  const { user } = useSession();
+  const { data: profile } = useQuery({
+    queryKey: ["favorite-approval", user?.id], enabled: !!user,
+    queryFn: async () => user ? (await supabase.from("profiles").select("approval_status, is_blocked").eq("id", user.id).maybeSingle()).data : null,
+  });
+  const canSave = !!user && profile?.approval_status === "approved" && !profile.is_blocked;
   useEffect(() => {
     setFav(JSON.parse(localStorage.getItem("rr-favs") || "[]").includes(l.id));
   }, [l.id]);
   function toggle(e: React.MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
+    if (!canSave) return;
     const favs: string[] = JSON.parse(localStorage.getItem("rr-favs") || "[]");
     const next = fav ? favs.filter((x) => x !== l.id) : [...favs, l.id];
     localStorage.setItem("rr-favs", JSON.stringify(next));
@@ -24,10 +35,13 @@ export function ListingCard({ l }: { l: Listing }) {
         </span>
         <div className="absolute bottom-2 left-2 flex gap-1">
           {l.sponsored && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-foreground">Sponsored</span>}
+          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-orange-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Featured</span>}
+          {l.early_access_until && new Date(l.early_access_until).getTime() > Date.now() && <span className="rounded-md bg-primary/90 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary-foreground">Early Access</span>}
+          {!l.is_sample && <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-primary">No Agent Fee</span>}
           {l.is_sample && <span className="rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-foreground">Sample listing</span>}
           {l.status && l.status !== "approved" && <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-foreground">{l.status === "pending" ? "Awaiting review" : l.status}</span>}
         </div>
-        <button onClick={toggle} aria-label="Save" className="absolute right-2 top-2 text-ink-foreground">
+        <button type="button" onClick={toggle} disabled={!canSave} title={canSave ? "Save property" : "Sign in and get approved to save properties"} aria-label="Save" className="absolute right-2 top-2 text-ink-foreground disabled:cursor-not-allowed disabled:opacity-50">
           <Heart className={`h-6 w-6 drop-shadow ${fav ? "fill-destructive text-destructive" : ""}`} />
         </button>
       </div>

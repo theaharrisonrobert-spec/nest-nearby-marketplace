@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/SiteHeader";
-import skyscraper from "@/assets/skyscraper.jpg";
+import { AuthScene } from "@/components/AuthScene";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -25,47 +24,38 @@ function ForgotPasswordPage() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const email = String(new FormData(e.currentTarget).get("email"));
+    const email = String(new FormData(e.currentTarget).get("email") ?? "").trim();
+    if (!email) { toast.error("Enter the email address for your account"); return; }
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    setSent(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL("/reset-password", window.location.origin).toString(),
+      });
+      if (error) { toast.error(error.message); return; }
+      setSent(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not request a password reset link. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
+  const input = "h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20";
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <img src={skyscraper} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-ink/70" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex justify-center"><Logo light /></div>
-        <div className="rounded-2xl bg-card p-7 shadow-card sm:p-9">
-          {sent ? (
-            <div>
-              <h1 className="text-2xl font-bold">Check your email</h1>
-              <p className="mt-2 text-sm text-muted-foreground">We sent you a password reset link. Open it to choose a new password and get back into your account.</p>
-              <Link to="/auth" search={{ mode: "signin" }} className="mt-5 inline-block font-medium text-primary">Back to sign in</Link>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold">Forgot your password?</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Enter the email you signed up with and we'll send you a reset link.</p>
-              <form onSubmit={onSubmit} className="mt-5 space-y-3">
-                <input name="email" type="email" required placeholder="Email address" className={input} />
-                <button disabled={busy} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
-                  {busy ? "Sending…" : "Send reset link"}
-                </button>
-              </form>
-              <p className="mt-5 text-center text-sm text-muted-foreground">
-                Remembered it? <Link to="/auth" search={{ mode: "signin" }} className="font-medium text-primary">Sign in</Link>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    <AuthScene>
+      {sent ? <div>
+        <h1 className="text-3xl font-bold text-slate-900">Check your email</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">If an account uses that address, a password reset link is on its way. Check your inbox and spam folder.</p>
+        <Link to="/auth" search={{ mode: "signin" }} className="mt-5 inline-block font-semibold text-[#2563EB] hover:underline">Back to sign in</Link>
+      </div> : <>
+        <h1 className="text-3xl font-bold text-slate-900">Reset your password</h1>
+        <p className="mt-2 text-sm text-slate-600">Enter your RentReady email address and we’ll send a reset link.</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <label htmlFor="reset-email" className="block text-sm font-semibold text-slate-800">Email Address *<input id="reset-email" name="email" autoComplete="email" type="email" required placeholder="Email address" className={`${input} mt-1.5 font-normal`} /></label>
+          <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-[#2563EB] font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-60">{busy ? "Sending…" : "Send reset link"}</button>
+        </form>
+        <p className="mt-5 text-sm text-slate-600">Remembered your password? <Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-[#2563EB] hover:underline">Sign in</Link></p>
+      </>}
+    </AuthScene>
   );
 }
