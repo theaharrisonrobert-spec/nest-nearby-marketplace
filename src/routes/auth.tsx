@@ -94,6 +94,19 @@ function AuthPage() {
     setStep(signup ? "signup" : "password");
   }
 
+  function resetToEmailStep() {
+    setStep("email");
+    setEmail("");
+    setPassword("");
+    setFullName("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setProfessionalType("");
+    setPhoneExtension("");
+    if (signup) setAccountRole("tenant");
+  }
+
   function chooseLandlord() {
     setAccountRole("landlord");
     setStep("professional");
@@ -182,7 +195,7 @@ function AuthPage() {
         role_selected: true,
       }, { onConflict: "id" });
       if (error) { toast.error(error.message); return; }
-      await supabase.auth.updateUser({ data: { phone: phone.trim(), role: googleRoleType, account_type: googleRoleType } });
+      await supabase.auth.updateUser({ data: { phone: phone.trim(), role: googleRoleType, account_type: googleRoleType, role_selected: true } });
       toast.success("Account type saved");
       await navigate({ to: "/approval-status", replace: true });
     } catch (error) {
@@ -274,7 +287,7 @@ function AuthPage() {
           </div>
           <Button type="submit" disabled={busy} className={primaryButton}>{busy ? "Creating account…" : "Create Account"}</Button>
         </form>
-        <button type="button" onClick={() => setStep("email")} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Back to Buyer / Tenant signup</button>
+        <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Back to Buyer / Tenant signup</button>
       </div>
     ) : step === "sent" ? (
       <div>
@@ -283,7 +296,7 @@ function AuthPage() {
           ? <>If <span className="font-semibold text-slate-900">{email.trim()}</span> is still awaiting confirmation, use the button below to request a new link. If you already have an account, sign in or reset your password.</>
           : <>Supabase accepted the signup for <span className="font-semibold text-slate-900">{email.trim()}</span>. A confirmation link should arrive by email. Check your spam folder if you don’t see it.</>}</p>
         <Button type="button" variant="outline" disabled={busy} onClick={() => void resendConfirmation()} className="mt-5 h-12 w-full border-slate-300 text-slate-800">{busy ? "Sending…" : "Resend confirmation link"}</Button>
-        <button type="button" onClick={() => setStep("email")} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Use a different email</button>
+        <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Use a different email</button>
       </div>
     ) : step === "password" ? (
       <div>
@@ -294,7 +307,7 @@ function AuthPage() {
           <div className="text-right"><Link to="/forgot-password" className={`text-sm ${linkClass}`}>Forgot password?</Link></div>
           <Button type="submit" disabled={busy} className={primaryButton}>{busy ? "Signing in…" : "Log In"}</Button>
         </form>
-        <button type="button" onClick={() => setStep("email")} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Change email</button>
+        <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Change email</button>
       </div>
     ) : step === "signup" ? (
       <div>
@@ -307,7 +320,7 @@ function AuthPage() {
           <label className="block text-sm font-semibold" htmlFor="signup-phone">Phone number *<input id="signup-phone" value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" inputMode="tel" autoComplete="tel" required placeholder="0803..." className={`${field} mt-1.5 font-normal`} /></label>
           <Button type="submit" disabled={busy} className={primaryButton}>{busy ? "Creating account…" : "Create Account"}</Button>
         </form>
-        <button type="button" onClick={() => setStep("email")} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Change email</button>
+        <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Change email</button>
         <p className="mt-5 text-sm text-slate-600">Have a RentReady account? <button type="button" onClick={() => void navigate({ to: "/auth", search: { mode: "signin", ...(next ? { next } : {}) }, replace: true })} className={linkClass}>Sign in</button></p>
       </div>
     ) : (

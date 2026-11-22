@@ -1,7 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import nodemailer from "npm:nodemailer@6.10.1";
+import { createWelcomeEmail, welcomeEmailHtml, type WelcomeEmailEvent } from "../_shared/welcome-email.ts";
 
 const escapeHtml = (value: unknown) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+const sender = "rentreadyng@gmail.com";
 const labels: Record<string, string> = {
   signup: "New RentReady signup",
   listing: "New property listed",
@@ -18,7 +20,7 @@ Deno.serve(async (request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const mailUser = Deno.env.get("GMAIL_SMTP_USER");
   const mailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-  if (!supabaseUrl || !serviceKey || !mailUser || !mailPassword) return new Response("Email service is not configured", { status: 503 });
+  if (!supabaseUrl || !serviceKey || !mailUser || !mailPassword || mailUser.toLowerCase() !== sender) return new Response("Email service is not configured for rentreadyng@gmail.com", { status: 503 });
 
   let webhook: { record?: { id?: number }; id?: number };
   try { webhook = await request.json(); } catch { return new Response("Invalid webhook payload", { status: 400 }); }
@@ -30,11 +32,29 @@ Deno.serve(async (request) => {
   const message = claimed?.[0];
   if (claimError) return new Response("Could not claim email", { status: 500 });
   if (!message) return new Response("Already sent or being delivered", { status: 200 });
-  const subject = labels[message.event];
-  if (!subject || message.recipient !== "rentreadyng@gmail.com") return new Response("Invalid email event", { status: 400 });
-  const body = Object.entries(message.payload as Record<string, unknown>)
-    .filter(([key]) => key !== "viewing_id")
-    .map(([key, value]) => `<p><strong>${escapeHtml(key.replaceAll("_", " "))}:</strong> ${escapeHtml(value)}</p>`).join("");
+  const isWelcome = message.event === "welcome_landlord" || message.event === "welcome_tenant";
+  const recipient = String(message.recipient ?? "");
+  if (!labels[message.event] && !isWelcome) return new Response("Invalid email event", { status: 400 });
+  if (isWelcome ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) : recipient !== sender) {
+    return new Response("Invalid email recipient", { status: 400 });
+  }
+
+  let subject = labels[message.event];
+  let text: string;
+  let html: string;
+  if (isWelcome) {
+    const welcome = createWelcomeEmail(message.event as WelcomeEmailEvent, String(message.payload?.first_name ?? "there"));
+    subject = welcome.subject;
+    text = welcome.text;
+    html = welcomeEmailHtml(welcome.text);
+  } else {
+    const payload = message.payload as Record<string, unknown>;
+    text = Object.entries(payload).filter(([key]) => key !== "viewing_id").map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value ?? "—")}`).join("\n");
+    const body = Object.entries(payload)
+      .filter(([key]) => key !== "viewing_id")
+      .map(([key, value]) => `<p><strong>${escapeHtml(key.replaceAll("_", " "))}:</strong> ${escapeHtml(value)}</p>`).join("");
+    html = `<h2>${escapeHtml(subject!)}</h2>${body}`;
+  }
 
   const transporter = nodemailer.createTransport({
     host: Deno.env.get("GMAIL_SMTP_HOST") ?? "smtp.gmail.com",
@@ -44,11 +64,11 @@ Deno.serve(async (request) => {
   });
   try {
     await transporter.sendMail({
-      from: `RentReady <${mailUser}>`,
-      to: "rentreadyng@gmail.com",
+      from: `RentReady <${sender}>`,
+      to: recipient,
       subject,
-      text: Object.entries(message.payload as Record<string, unknown>).filter(([key]) => key !== "viewing_id").map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value ?? "—")}`).join("\n"),
-      html: `<h2>${escapeHtml(subject)}</h2>${body}`,
+      text,
+      html,
     });
     const { error } = await admin.from("email_outbox").update({ sent_at: new Date().toISOString(), claimed_at: null }).eq("id", outboxId);
     if (error) return new Response("Email sent but queue update failed", { status: 500 });
