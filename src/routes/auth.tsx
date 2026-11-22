@@ -108,9 +108,7 @@ function AuthPage() {
         return;
       }
     }
-    const destination = sessionData.user?.email?.toLowerCase() === "rentreadyng@gmail.com"
-      ? "/admin"
-      : "/";
+    const destination = "/";
     await navigate({ to: destination as "/" | "/dashboard" | "/admin", replace: true });
   }
 
