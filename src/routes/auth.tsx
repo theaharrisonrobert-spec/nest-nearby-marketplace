@@ -210,7 +210,12 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin + "/auth/callback" },
+        options: {
+  redirectTo: window.location.origin + "/auth/callback",
+  queryParams: {
+    prompt: "select_account",
+  },
+},
       });
       if (error) toast.error(error.message);
     } catch (error) {
