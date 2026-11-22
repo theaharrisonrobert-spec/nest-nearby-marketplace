@@ -213,7 +213,7 @@ function AuthPage() {
         options: {
   redirectTo: window.location.origin + "/auth/callback",
   queryParams: {
-    prompt: "login",
+    prompt:"select_account consent",
   },
 },
       });
