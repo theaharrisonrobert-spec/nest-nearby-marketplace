@@ -110,7 +110,7 @@ function AuthPage() {
     }
     const destination = sessionData.user?.email?.toLowerCase() === "rentreadyng@gmail.com"
       ? "/admin"
-      : next ?? (accountType === "landlord" ? " / " : " / ''
+      : next ?? "/";
     await navigate({ to: destination as "/" | "/dashboard" | "/admin", replace: true });
   }
 
