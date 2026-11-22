@@ -25,10 +25,7 @@ function ApprovalStatusPage() {
   });
   useEffect(() => {
     if (!user) void navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
-    else if (user.email?.toLowerCase() === "rentreadyng@gmail.com") void navigate({ to: "/admin", replace: true });
-    else if (profile?.approval_status === "approved" && !profile.is_blocked) {
-      void navigate({ to: profile.account_type === "landlord" ? "/dashboard" : "/", replace: true });
-    }
+    else if (profile?.approval_status === "approved" && !profile.is_blocked) void navigate({ to: "/", replace: true });
   }, [navigate, profile, user]);
 
   const blocked = profile?.is_blocked;

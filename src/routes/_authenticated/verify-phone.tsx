@@ -55,7 +55,7 @@ function VerifyPhonePage() {
     if (error) { toast.error(error.message); return; }
     setVerified(true);
     toast.success("Phone number verified");
-    await navigate({ to: "/dashboard", replace: true });
+    await navigate({ to: "/", replace: true });
   }
 
   const input = "h-12 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary";

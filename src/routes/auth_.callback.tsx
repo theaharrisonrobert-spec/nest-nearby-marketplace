@@ -20,7 +20,7 @@ function AuthCallbackPage() {
       const { data: authData } = await supabase.auth.getUser();
       if (authData.user?.email?.toLowerCase() === "rentreadyng@gmail.com") {
         window.history.replaceState(window.history.state, "", window.location.pathname);
-        await navigate({ to: "/admin", replace: true });
+        await navigate({ to: "/", replace: true });
         return;
       }
       const { data: profile, error } = await supabase.from("profiles")
@@ -33,10 +33,10 @@ function AuthCallbackPage() {
         return;
       }
       if (profile.is_blocked || profile.approval_status !== "approved") {
-        await navigate({ to: "/approval-status", replace: true });
+        await navigate({ to: "/", replace: true });
         return;
       }
-      await navigate({ to: profile.account_type === "landlord" ? "/dashboard" : "/", replace: true });
+      await navigate({ to: "/", replace: true });
     }
 
     async function completeSignIn() {

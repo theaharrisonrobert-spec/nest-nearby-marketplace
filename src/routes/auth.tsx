@@ -99,17 +99,8 @@ function AuthPage() {
     setStep("professional");
   }
 
-  async function redirectByRole(accountType: string | null | undefined) {
-    const { data: sessionData } = await supabase.auth.getUser();
-    if (sessionData.user && sessionData.user.email?.toLowerCase() !== "rentreadyng@gmail.com") {
-      const { data: approval } = await supabase.from("profiles").select("approval_status, is_blocked").eq("id", sessionData.user.id).maybeSingle();
-      if (approval?.is_blocked || approval?.approval_status === "pending" || approval?.approval_status === "rejected" || !approval) {
-        await navigate({ to: "/approval-status", replace: true });
-        return;
-      }
-    }
-    const destination = "/";
-    await navigate({ to: destination as "/" | "/dashboard" | "/admin", replace: true });
+  async function redirectAfterLogin() {
+    await navigate({ to: "/", replace: true });
   }
 
   async function onLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -119,11 +110,9 @@ function AuthPage() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) { toast.error(error.message); return; }
-      const { data: profile } = await supabase.from("profiles").select("account_type").eq("id", data.user.id).maybeSingle();
-      const role = profile?.account_type ?? (typeof data.user.user_metadata["account_type"] === "string" ? data.user.user_metadata["account_type"] : null);
       await notifyAdmin("email");
       toast.success("Welcome back!");
-      await redirectByRole(role);
+      await redirectAfterLogin();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not sign in. Please try again.");
     } finally {

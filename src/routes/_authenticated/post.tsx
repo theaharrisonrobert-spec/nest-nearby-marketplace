@@ -72,7 +72,7 @@ function PostPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Submitted! Your property goes live once our team approves it.");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/" });
     void data;
   }
 
