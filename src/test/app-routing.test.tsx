@@ -13,5 +13,7 @@ describe("App routing", () => {
     const matches = router.matchRoutes("/");
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
+    expect(matches.map((match) => match.routeId)).toContain("/");
+    expect(matches.map((match) => match.routeId)).not.toContain("/_authenticated");
   });
 });
