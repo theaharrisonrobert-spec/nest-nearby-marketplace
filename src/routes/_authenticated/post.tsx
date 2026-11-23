@@ -24,14 +24,29 @@ function PostPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null; verification_status: string; account_type: string } | null>(null);
   useEffect(() => {
-    supabase.from("profiles").select("full_name, phone, verification_status, account_type").eq("id", user.id).maybeSingle().then(({ data }) => setProfile(data));
+    let active = true;
+    void Promise.all([
+      supabase.from("profiles").select("full_name, phone, verification_status, account_type").eq("id", user.id).maybeSingle(),
+      supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+    ]).then(([profileResult, adminResult]) => {
+      if (!active) return;
+      if (profileResult.error || adminResult.error) {
+        toast.error("Could not load your posting permissions. Please try again.");
+        return;
+      }
+      setProfile(profileResult.data);
+      setIsAdmin(!!adminResult.data);
+    }).finally(() => { if (active) setProfileLoading(false); });
+    return () => { active = false; };
   }, [user.id]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!canPublish(profile?.account_type, profile?.verification_status)) { toast.error("An approved landlord account is required to post"); return; }
+    if (!canPublish(profile?.account_type, profile?.verification_status, isAdmin)) { toast.error("An approved landlord account is required to post"); return; }
     const f = new FormData(e.currentTarget);
     const price = Number(String(f.get("price")).replace(/,/g, ""));
     if (!price || price <= 0) { toast.error("Enter your price in Naira"); return; }
@@ -80,9 +95,10 @@ function PostPage() {
   const label = "mb-1 block text-sm font-medium";
   const [purpose, setPurpose] = useState("rent");
 
-  if (!profile) return <div className="min-h-screen bg-background"><SiteHeader /><p className="mx-auto max-w-xl px-5 py-16 text-muted-foreground">Loading your account…</p></div>;
-  if (profile.account_type !== "landlord") return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16"><h1 className="text-3xl font-bold">Landlord account required</h1><p className="mt-3 text-muted-foreground">Buyer / Tenant accounts can discover properties, message owners and arrange viewings.</p><Link to="/listings" className="mt-5 inline-block text-primary">Browse properties</Link></div><SiteFooter /></div>;
-  if (profile.verification_status !== "approved") {
+  if (profileLoading) return <div className="min-h-screen bg-background"><SiteHeader /><p className="mx-auto max-w-xl px-5 py-16 text-muted-foreground">Loading your account…</p></div>;
+  if (!profile) return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16"><h1 className="text-3xl font-bold">Account unavailable</h1><p className="mt-3 text-muted-foreground">We couldn’t load your profile. Please refresh and try again.</p></div><SiteFooter /></div>;
+  if (profile.account_type !== "landlord" && !isAdmin) return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16"><h1 className="text-3xl font-bold">Landlord account required</h1><p className="mt-3 text-muted-foreground">Choose Landlord or Agent from your profile account type to post a property. You can still search, save, and message as a Tenant.</p><Link to="/settings" hash="account-type" className="mt-5 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-white">Change Account Type</Link><Link to="/listings" className="ml-3 mt-5 inline-block text-primary">Browse properties</Link></div><SiteFooter /></div>;
+  if (profile.verification_status !== "approved" && !isAdmin) {
     const pending = profile.verification_status === "pending";
     return (
       <div className="min-h-screen bg-muted/40">

@@ -1,102 +1,116 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BadgeCheck, ChevronDown, Heart, Home as HomeIcon, Menu, User, X } from "lucide-react";
+import { Heart, Home as HomeIcon, Menu, MessageSquare, Search, UserRound, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES } from "@/lib/listings";
+import { getActiveMobileTab } from "@/lib/mobile-navigation";
 
 export function Logo({ light = false, homeMark = false }: { light?: boolean; homeMark?: boolean }) {
   return homeMark
-    ? <Link to="/" className="flex shrink-0 items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0B3D2E] text-white"><HomeIcon className="h-6 w-6" strokeWidth={2.5} /></span><span className="font-display text-2xl font-bold text-[#0B3D2E]">RentReady</span></Link>
+    ? <Link to="/" className="flex shrink-0 items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"><HomeIcon className="h-6 w-6" strokeWidth={2.5} /></span><span className="font-display text-2xl font-bold text-primary">RentReady</span></Link>
     : <Link to="/" className="flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" strokeWidth={2.5} /><span className={"font-display text-2xl font-bold " + (light ? "text-ink-foreground" : "text-foreground")}>Rent<span className="text-primary">Ready</span></span></Link>;
 }
 
 export function SiteHeader({ overlay = false, home = false }: { overlay?: boolean; home?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [account, setAccount] = useState(false);
   const { user } = useSession();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeMobileTab = getActiveMobileTab(pathname);
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: profile } = useQuery({
-    queryKey: ["account-menu-profile", user?.id], enabled: !!user,
+  const { data: unreadMessages = 0 } = useQuery({
+    queryKey: ["unread", user?.id],
+    enabled: !!user,
+    refetchInterval: 15000,
     queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase.from("profiles").select("full_name, account_type, verification_status").eq("id", user.id).maybeSingle();
+      if (!user) return 0;
+      const { count, error } = await supabase.from("messages").select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id).is("read_at", null);
       if (error) throw error;
-      return data;
+      return count ?? 0;
     },
   });
-  const { data: isAdmin } = useQuery({
-    queryKey: ["account-menu-admin", user?.id], enabled: !!user,
-    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data : false,
+  const { data: headerProfile } = useQuery({
+    queryKey: ["profile-header", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase.from("profiles").select("full_name, avatar_url, account_type, professional_type").eq("id", user.id).maybeSingle();
+      if (error) throw error;
+      if (!data?.avatar_url) return { fullName: data?.full_name ?? null, avatarUrl: null, accountType: data?.account_type ?? null, professionalType: data?.professional_type ?? null };
+      const { data: signed, error: signedError } = await supabase.storage.from("profile-photos").createSignedUrl(data.avatar_url, 60 * 60);
+      if (signedError) throw signedError;
+      return { fullName: data.full_name, avatarUrl: signed.signedUrl, accountType: data.account_type, professionalType: data.professional_type };
+    },
   });
-    useEffect(() => {
-    if (!open && !account) {
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["home-greeting-admin", user?.id],
+    enabled: home && !!user,
+    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data ?? false : false,
+  });
+  useEffect(() => {
+    if (!open) {
       document.body.style.overflow = "";
       return;
     }
     document.body.style.overflow = "hidden";
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); setAccount(false); } };
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", close);
     return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", close); };
-  }, [open, account]);
+  }, [open]);
   async function signOut() {
-    setAccount(false); setOpen(false);
+    setOpen(false);
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
     await navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
   }
-  const close = () => { setOpen(false); setAccount(false); };
+  const close = () => setOpen(false);
+  const headerInitial = (headerProfile?.fullName?.trim() || (typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "") || user?.email || "?").charAt(0).toUpperCase();
   return <>
     <header className={(home ? "sticky top-0" : "relative") + " z-40 border-b border-border " + (home ? "bg-white text-foreground shadow-sm" : overlay ? "bg-transparent text-ink-foreground" : "bg-card text-card-foreground")}>
       <div className={home ? "mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-5" : "mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5"}>
-        <Button variant="ghost" size="icon" className={home ? "lg:hidden" : "justify-self-start"} aria-label="Open menu" onClick={() => { setOpen(true); setAccount(false); }}><Menu /></Button>
+        <Button variant="ghost" size="icon" className={home ? "lg:hidden" : "justify-self-start"} aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></Button>
         <Logo light={overlay && !home} homeMark={home} />
         {home && <nav className="hidden items-center gap-5 lg:flex" aria-label="Main navigation">
-          <Link to="/" className="text-sm font-medium hover:text-[#0B3D2E]">Home</Link>
-          <Link to="/listings" search={{ purpose: "sale" }} className="text-sm font-medium hover:text-[#0B3D2E]">Buy</Link>
-          <Link to="/listings" search={{ purpose: "rent" }} className="text-sm font-medium hover:text-[#0B3D2E]">Rent</Link>
-          <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-[#0B3D2E]">Short Let</Link>
-          <Link to="/landlords" className="text-sm font-medium hover:text-[#0B3D2E]">Agents</Link>
+          <Link to="/" className="text-sm font-medium hover:text-primary">Home</Link>
+          <Link to="/listings" search={{ purpose: "sale" }} className="text-sm font-medium hover:text-primary">Buy</Link>
+          <Link to="/listings" search={{ purpose: "rent" }} className="text-sm font-medium hover:text-primary">Rent</Link>
+          <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-primary">Short Let</Link>
         </nav>}
-        <div className={home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end"}>
-          {home && <Link to="/listings" aria-label="Saved properties" className="hidden text-[#0B3D2E] sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
-          {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
-          {home && <Button asChild className="hidden bg-[#2563EB] text-white hover:bg-[#1D4ED8] sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
+        <div className={(home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end") + " relative"}>
+          {home && <Link to="/saved" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
+          {user ? <Link to="/profile" aria-label="Profile" className="box-border flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary text-primary-foreground lg:h-10 lg:w-10">
+            {headerProfile?.avatarUrl ? <img src={headerProfile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-base font-bold">{headerInitial}</span>}
+          </Link> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {home && (user ? isAdmin || headerProfile?.accountType === "landlord" ? <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">+ Post Property</Link></Button> : headerProfile?.accountType === "tenant" ? <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/settings" hash="account-type">Become a Landlord to Post</Link></Button> : null : <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/auth" search={{ mode: "signup", type: "landlord" }}>Post Property</Link></Button>)}
         </div>
       </div>
     </header>
     {open && <div role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-50 overflow-y-auto bg-background text-foreground">
       <div className="grid h-20 grid-cols-[1fr_auto_1fr] items-center border-b border-border px-5"><Button variant="outline" size="icon" aria-label="Close menu" onClick={close}><X /></Button><Logo /><span /></div>
-      <nav className="mx-auto max-w-4xl" aria-label="Property navigation">
-        <Link to="/" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Home</Link>
-        <Link to="/listings" search={{ purpose: "sale" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Buy</Link>
-        <Link to="/listings" search={{ purpose: "rent" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Rent</Link>
-        <Link to="/listings" search={{ purpose: "short-let" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Short Let</Link>
-        <Link to="/landlords" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Agents</Link>
-        <Link to="/post" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Post Property</Link>
-        {!user ? <Link to="/auth" search={{ mode: "signin" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Sign in</Link> : <Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">My account</Link>}
-        <details className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">Browse by property type<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2">{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>
+      <nav className="mx-auto max-w-4xl" aria-label="More navigation">
+        <Link to="/settings" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Settings</Link>
+        <Link to="/help" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Help / Support</Link>
+        <Link to="/about" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">About</Link>
+        {user && <button type="button" onClick={() => void signOut()} className="flex min-h-20 w-full items-center border-b border-border px-6 text-left text-xl">Log out</button>}
       </nav>
     </div>}
-    {account && user && <div className="fixed inset-0 z-50 bg-ink/30" onClick={close}><section role="dialog" aria-modal="true" aria-label="Account menu" onClick={e => e.stopPropagation()} className="absolute inset-x-0 top-20 mx-auto max-w-lg rounded-lg bg-card px-5 py-4 text-card-foreground shadow-card">
-      <div className="flex items-center justify-between border-b border-border pb-3"><div><p className="font-semibold">{profile?.full_name || "My account"}</p>{profile?.verification_status === "approved" && <span className="mt-1 flex items-center gap-1 text-sm text-primary"><BadgeCheck className="h-4 w-4" />Verified identity</span>}</div><Button variant="ghost" size="icon" aria-label="Close account menu" onClick={close}><X /></Button></div>
-      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Your dashboard</Link>
-      {profile?.account_type === "landlord" && <><Link to="/my-listings" onClick={close} className="block py-4 text-lg font-semibold">Your listings</Link><Link to="/dashboard" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Promote your listing</Link></>}
-      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Tours & viewings</Link><Link to="/messages" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Inbox</Link>
-      <Link to="/verify" onClick={close} className="block py-4 text-lg font-semibold">{profile?.verification_status === "approved" ? "Identity verified" : "Identity verification"}</Link>
-      {isAdmin && <Link to="/admin" onClick={close} className="block py-4 text-lg font-semibold">Admin dashboard</Link>}
-      <Button variant="ghost" onClick={signOut} className="h-14 w-full justify-start border-t border-border px-0 text-lg font-semibold">Sign out</Button>
-    </section></div>}
+    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-5 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(26,26,26,0.08)] backdrop-blur lg:hidden">
+      <Link to="/" aria-current={activeMobileTab === "home" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "home" ? "text-primary" : "text-muted-foreground"}`}><HomeIcon className="h-5 w-5" />Home</Link>
+      <Link to="/listings" aria-current={activeMobileTab === "search" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "search" ? "text-primary" : "text-muted-foreground"}`}><Search className="h-5 w-5" />Search</Link>
+      <Link to="/saved" aria-current={activeMobileTab === "saved" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "saved" ? "text-primary" : "text-muted-foreground"}`}><Heart className="h-5 w-5" />Saved</Link>
+      <Link to="/messages" aria-current={activeMobileTab === "messages" ? "page" : undefined} aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : "Messages"} className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "messages" ? "text-primary" : "text-muted-foreground"}`}><MessageSquare className="h-5 w-5" />Messages{unreadMessages > 0 && <span aria-hidden="true" className="absolute right-1/4 top-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-white" />}</Link>
+      <Link to="/profile" aria-current={activeMobileTab === "profile" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "profile" ? "text-primary" : "text-muted-foreground"}`}><UserRound className="h-5 w-5" />Profile</Link>
+    </nav>
   </>;
 }
 
 export function SiteFooter() {
   return (
     <footer className="bg-ink text-ink-foreground">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 pt-12 pb-28 md:grid-cols-4 md:py-12">
         <div>
           <Logo light />
           <p className="mt-4 text-sm text-ink-foreground/70">Your Space. Your Choice. Your Next Move. Connecting Properties, People, and Opportunities.</p>
@@ -130,7 +144,7 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-ink-foreground/10 py-5 text-center text-xs text-ink-foreground/60">© 2026 RentReady.ng All rights reserved.</div>
+      <div className="border-t border-ink-foreground/10 px-5 pt-5 pb-24 text-center text-xs text-ink-foreground/60 md:py-5">© 2026 RentReady.ng All rights reserved.</div>
     </footer>
   );
 }

@@ -50,8 +50,8 @@ function AdminPage() {
     setIsAdmin(!!role);
     if (!role) return;
     const [{ data: p, error: pError }, { data: directory, error: directoryError }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_document_path, selfie_document_path, verification_status, created_at")
-        .eq("account_type", "landlord").eq("approval_status", "approved").neq("verification_status", "approved").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_number, id_document_path, selfie_document_path, verification_status, verification_fee_paid, created_at")
+        .in("account_type", ["tenant", "landlord"]).neq("verification_status", "approved").order("created_at", { ascending: false }),
       supabase.rpc("admin_user_directory", { _search: null }),
       supabase.from("admin_notifications").select("id, kind, message, created_at").order("created_at", { ascending: false }).limit(50),
       supabase.from("profiles").select("id, full_name, phone").eq("account_review_required", true),
@@ -120,20 +120,21 @@ function AdminPage() {
         <AdminPhaseOne />
 
         <h2 className="mt-10 text-xl font-bold">Identity verification review queue ({pending.length})</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Open a landlord to view their ID and selfie before deciding. Accounts without an ID remain in the queue as awaiting upload.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Open an applicant to view their ID and selfie before deciding. Tenants verify free; landlords pay the one-time fee after uploading.</p>
         {pending.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No landlord identity reviews are waiting.</p>
+          <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No identity reviews are waiting.</p>
         ) : (
           <div className="mt-3 space-y-3">
             {pending.map((p) => (
               <button key={p.id} type="button" onClick={() => setSelectedVerification(p)} className="flex w-full flex-wrap items-center justify-between gap-4 rounded-xl bg-card p-5 text-left shadow-card transition hover:ring-2 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <span>
                   <span className="block font-semibold">{p.full_name ?? "Unnamed user"}</span>
-                  <span className="mt-1 block text-sm text-muted-foreground">{p.email} · {p.phone ?? "No phone"} · Landlord</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{p.email} · {p.phone ?? "No phone"} · {p.account_type === "tenant" ? "Tenant" : "Landlord"}</span>
                   <span className="mt-1 block text-xs text-muted-foreground">Joined {new Date(p.created_at).toLocaleDateString("en-NG")}{p.id_type ? ` · ${p.id_type}` : ""}</span>
                 </span>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700"}`}>
-                  {p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary"}`}>{p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}</span>
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">{p.account_type === "tenant" ? "Free (Tenant)" : p.verification_fee_paid ? "Paid" : "Not Paid"}</span>
                 </span>
               </button>
             ))}

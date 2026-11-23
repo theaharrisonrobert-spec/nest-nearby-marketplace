@@ -11,17 +11,22 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApprovalStatusRouteImport } from './routes/approval-status'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LandlordsRouteImport } from './routes/landlords'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SavedRouteImport } from './routes/saved'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TestRouteImport } from './routes/test'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -30,9 +35,9 @@ import { Route as AuthenticatedPostRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedVerifyRouteImport } from './routes/_authenticated/verify'
 import { Route as AuthenticatedVerifyPhoneRouteImport } from './routes/_authenticated/verify-phone'
 import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
-import { Route as PremiumCallbackRouteImport } from './routes/premium_.callback'
 import { Route as ListingsIndexRouteImport } from './routes/listings.index'
 import { Route as ListingsIdRouteImport } from './routes/listings.$id'
+import { Route as PremiumCallbackRouteImport } from './routes/premium_.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,14 +48,19 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApprovalStatusRoute = ApprovalStatusRouteImport.update({
   id: '/approval-status',
   path: '/approval-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -83,9 +93,29 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -93,9 +123,9 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SupportRoute = SupportRouteImport.update({
-  id: '/support',
-  path: '/support',
+const TestRoute = TestRouteImport.update({
+  id: '/test',
+  path: '/test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -128,19 +158,15 @@ const AuthenticatedVerifyRoute = AuthenticatedVerifyRouteImport.update({
   path: '/verify',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVerifyPhoneRoute = AuthenticatedVerifyPhoneRouteImport.update({
-  id: '/verify-phone',
-  path: '/verify-phone',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedVerifyPhoneRoute =
+  AuthenticatedVerifyPhoneRouteImport.update({
+    id: '/verify-phone',
+    path: '/verify-phone',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth_/callback',
   path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PremiumCallbackRoute = PremiumCallbackRouteImport.update({
-  id: '/premium_/callback',
-  path: '/premium/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListingsIndexRoute = ListingsIndexRouteImport.update({
@@ -153,20 +179,30 @@ const ListingsIdRoute = ListingsIdRouteImport.update({
   path: '/listings/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PremiumCallbackRoute = PremiumCallbackRouteImport.update({
+  id: '/premium_/callback',
+  path: '/premium/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/about': typeof AboutRoute
   '/approval-status': typeof ApprovalStatusRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/landlords': typeof LandlordsRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/terms': typeof TermsRoute
+  '/saved': typeof SavedRoute
+  '/settings': typeof SettingsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
+  '/test': typeof TestRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -175,23 +211,28 @@ export interface FileRoutesByFullPath {
   '/verify': typeof AuthenticatedVerifyRoute
   '/verify-phone': typeof AuthenticatedVerifyPhoneRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/premium/callback': typeof PremiumCallbackRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/premium/callback': typeof PremiumCallbackRoute
   '/listings/': typeof ListingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/about': typeof AboutRoute
   '/approval-status': typeof ApprovalStatusRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/landlords': typeof LandlordsRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/terms': typeof TermsRoute
+  '/saved': typeof SavedRoute
+  '/settings': typeof SettingsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
+  '/test': typeof TestRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -200,25 +241,30 @@ export interface FileRoutesByTo {
   '/verify': typeof AuthenticatedVerifyRoute
   '/verify-phone': typeof AuthenticatedVerifyPhoneRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/premium/callback': typeof PremiumCallbackRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/premium/callback': typeof PremiumCallbackRoute
   '/listings': typeof ListingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/about': typeof AboutRoute
   '/approval-status': typeof ApprovalStatusRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/landlords': typeof LandlordsRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/terms': typeof TermsRoute
+  '/saved': typeof SavedRoute
+  '/settings': typeof SettingsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
+  '/test': typeof TestRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -227,25 +273,30 @@ export interface FileRoutesById {
   '/_authenticated/verify': typeof AuthenticatedVerifyRoute
   '/_authenticated/verify-phone': typeof AuthenticatedVerifyPhoneRoute
   '/auth_/callback': typeof AuthCallbackRoute
-  '/premium_/callback': typeof PremiumCallbackRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/premium_/callback': typeof PremiumCallbackRoute
   '/listings/': typeof ListingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
+    | '/about'
     | '/approval-status'
+    | '/auth'
     | '/contact'
     | '/forgot-password'
     | '/help'
     | '/how-it-works'
     | '/landlords'
     | '/privacy'
+    | '/profile'
     | '/reset-password'
-    | '/terms'
+    | '/saved'
+    | '/settings'
     | '/support'
+    | '/terms'
+    | '/test'
     | '/admin'
     | '/dashboard'
     | '/messages'
@@ -254,23 +305,28 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-phone'
     | '/auth/callback'
-    | '/premium/callback'
     | '/listings/$id'
+    | '/premium/callback'
     | '/listings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
+    | '/about'
     | '/approval-status'
+    | '/auth'
     | '/contact'
     | '/forgot-password'
     | '/help'
     | '/how-it-works'
     | '/landlords'
     | '/privacy'
+    | '/profile'
     | '/reset-password'
-    | '/terms'
+    | '/saved'
+    | '/settings'
     | '/support'
+    | '/terms'
+    | '/test'
     | '/admin'
     | '/dashboard'
     | '/messages'
@@ -279,24 +335,29 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-phone'
     | '/auth/callback'
-    | '/premium/callback'
     | '/listings/$id'
+    | '/premium/callback'
     | '/listings'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
+    | '/about'
     | '/approval-status'
+    | '/auth'
     | '/contact'
     | '/forgot-password'
     | '/help'
     | '/how-it-works'
     | '/landlords'
     | '/privacy'
+    | '/profile'
     | '/reset-password'
-    | '/terms'
+    | '/saved'
+    | '/settings'
     | '/support'
+    | '/terms'
+    | '/test'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/messages'
@@ -305,28 +366,33 @@ export interface FileRouteTypes {
     | '/_authenticated/verify'
     | '/_authenticated/verify-phone'
     | '/auth_/callback'
-    | '/premium_/callback'
     | '/listings/$id'
+    | '/premium_/callback'
     | '/listings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AboutRoute: typeof AboutRoute
   ApprovalStatusRoute: typeof ApprovalStatusRoute
+  AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LandlordsRoute: typeof LandlordsRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  TermsRoute: typeof TermsRoute
+  SavedRoute: typeof SavedRoute
+  SettingsRoute: typeof SettingsRoute
   SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
+  TestRoute: typeof TestRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
-  PremiumCallbackRoute: typeof PremiumCallbackRoute
   ListingsIdRoute: typeof ListingsIdRoute
+  PremiumCallbackRoute: typeof PremiumCallbackRoute
   ListingsIndexRoute: typeof ListingsIndexRoute
 }
 
@@ -346,11 +412,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approval-status': {
@@ -358,6 +424,13 @@ declare module '@tanstack/react-router' {
       path: '/approval-status'
       fullPath: '/approval-status'
       preLoaderRoute: typeof ApprovalStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -402,11 +475,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -416,11 +517,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportRouteImport
+    '/test': {
+      id: '/test'
+      path: '/test'
+      fullPath: '/test'
+      preLoaderRoute: typeof TestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -479,13 +580,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/premium_/callback': {
-      id: '/premium_/callback'
-      path: '/premium/callback'
-      fullPath: '/premium/callback'
-      preLoaderRoute: typeof PremiumCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/listings/': {
       id: '/listings/'
       path: '/listings'
@@ -498,6 +592,13 @@ declare module '@tanstack/react-router' {
       path: '/listings/$id'
       fullPath: '/listings/$id'
       preLoaderRoute: typeof ListingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium_/callback': {
+      id: '/premium_/callback'
+      path: '/premium/callback'
+      fullPath: '/premium/callback'
+      preLoaderRoute: typeof PremiumCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -529,36 +630,27 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AboutRoute: AboutRoute,
   ApprovalStatusRoute: ApprovalStatusRoute,
+  AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   LandlordsRoute: LandlordsRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  TermsRoute: TermsRoute,
+  SavedRoute: SavedRoute,
+  SettingsRoute: SettingsRoute,
   SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
+  TestRoute: TestRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-  PremiumCallbackRoute: PremiumCallbackRoute,
   ListingsIdRoute: ListingsIdRoute,
+  PremiumCallbackRoute: PremiumCallbackRoute,
   ListingsIndexRoute: ListingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-
-import type { startInstance } from './start.ts'
-
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-
-    router: Awaited<ReturnType<typeof getRouter>>
-
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

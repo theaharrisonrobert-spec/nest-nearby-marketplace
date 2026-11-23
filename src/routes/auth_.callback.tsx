@@ -89,9 +89,9 @@ function AuthCallbackPage() {
 
   return <AuthScene>
     <div className="text-center">
-      <h1 className="text-2xl font-bold text-slate-900">Confirming your account…</h1>
-      <p role="status" className="mt-2 text-sm text-slate-600">{message}</p>
-      <Link to="/" className="mt-5 inline-block text-sm font-semibold text-[#2563EB] hover:underline">Return home</Link>
+      <h1 className="text-2xl font-bold text-foreground">Confirming your account…</h1>
+      <p role="status" className="mt-2 text-sm text-muted-foreground">{message}</p>
+      <Link to="/" className="mt-5 inline-block text-sm font-semibold text-primary hover:underline">Return home</Link>
     </div>
   </AuthScene>;
 }

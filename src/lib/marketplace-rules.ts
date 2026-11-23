@@ -5,8 +5,8 @@ export function accountType(value: unknown): RegistrationType {
   return value === "landlord" ? "landlord" : "tenant";
 }
 
-export function canPublish(type: string | null | undefined, verification: string | null | undefined) {
-  return type === "landlord" && verification === "approved";
+export function canPublish(type: string | null | undefined, verification: string | null | undefined, isAdmin = false) {
+  return isAdmin || (type === "landlord" && verification === "approved");
 }
 
 export function categoryMatches(actual: string, selected?: string) {

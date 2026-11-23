@@ -19,9 +19,11 @@ export type AdminReviewPerson = {
   created_at: string;
   approval_status?: string;
   id_type: string | null;
+  id_number?: string | null;
   id_document_path: string | null;
   selfie_document_path: string | null;
   verification_status: string;
+  verification_fee_paid?: boolean;
 };
 
 type Props = {
@@ -37,7 +39,7 @@ type Props = {
 type SignedDocument = { preview: string; download: string };
 
 function isPdf(path: string) {
-  return path.toLowerCase().split("?")[0].endsWith(".pdf");
+  return path.toLowerCase().split("?")[0]?.endsWith(".pdf") ?? false;
 }
 
 function DocumentPanel({
@@ -181,7 +183,7 @@ export function AdminIdentityReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto pb-24 sm:pb-6">
         {person && (
           <>
             <DialogHeader>
@@ -198,11 +200,13 @@ export function AdminIdentityReviewDialog({
               <div><dt className="text-muted-foreground">Role</dt><dd className="font-medium capitalize">{person.account_type}</dd></div>
               <div><dt className="text-muted-foreground">Date joined</dt><dd className="font-medium">{new Date(person.created_at).toLocaleString("en-NG")}</dd></div>
               <div><dt className="text-muted-foreground">ID type</dt><dd className="font-medium">{person.id_type || "Not provided"}</dd></div>
+              {mode === "identity" && <div><dt className="text-muted-foreground">ID number</dt><dd className="break-all font-medium">{person.id_number || "Not provided"}</dd></div>}
+              {mode === "identity" && <div><dt className="text-muted-foreground">Verification fee</dt><dd className="font-medium">{person.account_type === "tenant" ? "Free (Tenant)" : person.verification_fee_paid ? "Paid" : "Not Paid"}</dd></div>}
             </dl>
 
             <section aria-label="Identity document status" className="space-y-3">
               {!person.id_document_path ? (
-                <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm font-medium">Awaiting ID Upload — identity approval is unavailable until an ID is uploaded.</p>
+                <p className="rounded-lg border border-amber-500/40 bg-primary/10 p-4 text-sm font-medium">Awaiting ID Upload — identity approval is unavailable until an ID is uploaded.</p>
               ) : (
                 <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">ID Uploaded{person.selfie_document_path ? " · Selfie uploaded" : " · Awaiting selfie upload"}</p>
               )}

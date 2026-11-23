@@ -35,12 +35,13 @@ Deno.serve(async (request) => {
   if (!body.plan || !(body.plan in prices)) return json({ error: "Choose a valid RentReady plan" }, 400);
   const plan = body.plan;
   const service = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  const { data: profile, error: profileError } = await service.from("profiles").select("account_type, verification_fee_paid, approval_status, is_blocked").eq("id", authData.user.id).maybeSingle();
+  const { data: profile, error: profileError } = await service.from("profiles").select("account_type, verification_fee_paid, approval_status, is_blocked, id_number, id_document_path, selfie_document_path").eq("id", authData.user.id).maybeSingle();
   if (profileError || !profile) return json({ error: "Could not load your RentReady profile" }, 400);
-  if (profile.approval_status !== "approved" || profile.is_blocked) return json({ error: "Your account must be approved before making a payment" }, 403);
+  if (profile.is_blocked || (plan !== "nin_verification" && profile.approval_status !== "approved")) return json({ error: "Your account must be approved before making this payment" }, 403);
   if (plan === "landlord_premium" && profile.account_type !== "landlord") return json({ error: "Landlord Premium is for landlord accounts" }, 403);
   if (plan === "tenant_premium" && profile.account_type !== "tenant") return json({ error: "Tenant Premium is for tenant accounts" }, 403);
-  if (plan === "nin_verification" && (profile.account_type !== "landlord" || profile.verification_fee_paid)) return json({ error: "This verification fee is for landlords and can only be paid once" }, 400);
+  if (plan === "nin_verification" && (profile.account_type !== "landlord" || profile.verification_fee_paid)) return json({ error: "The RentReady Verification Fee is available to landlords once" }, 400);
+  if (plan === "nin_verification" && (!profile.id_number || !profile.id_document_path || !profile.selfie_document_path)) return json({ error: "Upload your NIN, ID and selfie before paying the RentReady Verification Fee" }, 400);
 
   if (plan === "featured_listing") {
     if (!body.listing_id) return json({ error: "Choose the property to feature" }, 400);

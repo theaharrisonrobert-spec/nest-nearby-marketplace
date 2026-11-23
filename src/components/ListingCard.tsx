@@ -30,22 +30,20 @@ export function ListingCard({ l }: { l: Listing }) {
     <Link to="/listings/$id" params={{ id: l.id }} className="block overflow-hidden rounded-xl bg-card p-2 shadow-card transition hover:-translate-y-1">
       <div className="relative">
         <img src={listingImage(l)} alt={l.title} loading="lazy" className="aspect-[16/10] w-full rounded-lg object-cover" />
-        <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
-          {l.purpose === "sale" ? "For Sale" : "For Rent"}
-        </span>
-        <div className="absolute bottom-2 left-2 flex gap-1">
-          {l.sponsored && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-foreground">Sponsored</span>}
-          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-orange-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Featured</span>}
-          {l.early_access_until && new Date(l.early_access_until).getTime() > Date.now() && <span className="rounded-md bg-primary/90 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary-foreground">Early Access</span>}
-          {!l.is_sample && <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-primary">No Agent Fee</span>}
-          {l.is_sample && <span className="rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-foreground">Sample listing</span>}
-          {l.status && l.status !== "approved" && <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-foreground">{l.status === "pending" ? "Awaiting review" : l.status}</span>}
-        </div>
         <button type="button" onClick={toggle} disabled={!canSave} title={canSave ? "Save property" : "Sign in and get approved to save properties"} aria-label="Save" className="absolute right-2 top-2 text-ink-foreground disabled:cursor-not-allowed disabled:opacity-50">
           <Heart className={`h-6 w-6 drop-shadow ${fav ? "fill-destructive text-destructive" : ""}`} />
         </button>
       </div>
       <div className="p-3">
+        <div className="mb-2 flex flex-wrap gap-1">
+          <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white">{l.purpose === "sale" ? "For Sale" : "For Rent"}</span>
+          {l.sponsored && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-foreground">Sponsored</span>}
+          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Featured</span>}
+          {l.early_access_until && new Date(l.early_access_until).getTime() > Date.now() && <span className="rounded-md bg-primary/90 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Early Access</span>}
+          {!l.is_sample && <span className="rounded-md bg-white px-2 py-0.5 text-[10px] font-semibold text-primary">No Agent Fee</span>}
+          {l.is_sample && <span className="rounded-md bg-ink px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-foreground">Sample listing</span>}
+          {l.status && l.status !== "approved" && <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-foreground">{l.status === "pending" ? "Awaiting review" : l.status}</span>}
+        </div>
         <h3 className="font-semibold">{l.title}</h3>
         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{l.city}, {l.state}</div>
         <div className="mt-2 text-lg font-bold text-primary">

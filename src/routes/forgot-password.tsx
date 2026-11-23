@@ -40,21 +40,21 @@ function ForgotPasswordPage() {
     }
   }
 
-  const input = "h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20";
+  const input = "h-12 w-full rounded-lg border border-border bg-white px-4 text-base text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
   return (
     <AuthScene>
       {sent ? <div>
-        <h1 className="text-3xl font-bold text-slate-900">Check your email</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">If an account uses that address, a password reset link is on its way. Check your inbox and spam folder.</p>
-        <Link to="/auth" search={{ mode: "signin" }} className="mt-5 inline-block font-semibold text-[#2563EB] hover:underline">Back to sign in</Link>
+        <h1 className="text-3xl font-bold text-foreground">Check your email</h1>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">If an account uses that address, a password reset link is on its way. Check your inbox and spam folder.</p>
+        <Link to="/auth" search={{ mode: "signin" }} className="mt-5 inline-block font-semibold text-primary hover:underline">Back to sign in</Link>
       </div> : <>
-        <h1 className="text-3xl font-bold text-slate-900">Reset your password</h1>
-        <p className="mt-2 text-sm text-slate-600">Enter your RentReady email address and we’ll send a reset link.</p>
+        <h1 className="text-3xl font-bold text-foreground">Reset your password</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Enter your RentReady email address and we’ll send a reset link.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <label htmlFor="reset-email" className="block text-sm font-semibold text-slate-800">Email Address *<input id="reset-email" name="email" autoComplete="email" type="email" required placeholder="Email address" className={`${input} mt-1.5 font-normal`} /></label>
-          <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-[#2563EB] font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-60">{busy ? "Sending…" : "Send reset link"}</button>
+          <label htmlFor="reset-email" className="block text-sm font-semibold text-foreground">Email Address *<input id="reset-email" name="email" autoComplete="email" type="email" required placeholder="Email address" className={`${input} mt-1.5 font-normal`} /></label>
+          <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-primary font-semibold text-white hover:bg-primary/90 disabled:opacity-60">{busy ? "Sending…" : "Send reset link"}</button>
         </form>
-        <p className="mt-5 text-sm text-slate-600">Remembered your password? <Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-[#2563EB] hover:underline">Sign in</Link></p>
+        <p className="mt-5 text-sm text-muted-foreground">Remembered your password? <Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-primary hover:underline">Sign in</Link></p>
       </>}
     </AuthScene>
   );

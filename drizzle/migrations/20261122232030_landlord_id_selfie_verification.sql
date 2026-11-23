@@ -77,20 +77,20 @@ BEGIN
     NEW.verification_name_matched := OLD.verification_name_matched;
 
     IF is_new_submission THEN
-      IF NEW.account_type IS DISTINCT FROM 'landlord' THEN
-        RAISE EXCEPTION 'Only landlord accounts can submit identity verification';
+      IF NEW.account_type NOT IN ('tenant', 'landlord') THEN
+        RAISE EXCEPTION 'Choose Tenant or Landlord before submitting identity verification';
       END IF;
-      IF NOT NEW.verification_fee_paid THEN
-        RAISE EXCEPTION 'Verification fee must be confirmed before submission';
-      END IF;
-      IF NEW.phone_verified_at IS NULL THEN
-        RAISE EXCEPTION 'Phone verification is required before submission';
+      IF NEW.account_type = 'landlord' AND NOT NEW.verification_fee_paid THEN
+        RAISE EXCEPTION 'RentReady Verification Fee must be confirmed before landlord submission';
       END IF;
       IF NULLIF(btrim(NEW.full_name), '') IS NULL THEN
         RAISE EXCEPTION 'A registered name is required for verification';
       END IF;
       IF NEW.id_document_path IS NULL OR NEW.selfie_document_path IS NULL THEN
         RAISE EXCEPTION 'Both an ID document and a selfie are required';
+      END IF;
+      IF NEW.id_number !~ '^\d{11}$' THEN
+        RAISE EXCEPTION 'A valid 11-digit NIN is required';
       END IF;
       IF split_part(NEW.id_document_path, '/', 1) <> NEW.id::text
          OR split_part(NEW.selfie_document_path, '/', 1) <> NEW.id::text THEN
@@ -99,7 +99,7 @@ BEGIN
     END IF;
   ELSIF NEW.verification_status = 'approved'
     AND OLD.verification_status IS DISTINCT FROM 'approved' THEN
-    IF NEW.account_type IS DISTINCT FROM 'landlord'
+    IF NEW.account_type NOT IN ('tenant', 'landlord')
        OR NEW.id_document_path IS NULL
        OR NEW.selfie_document_path IS NULL
        OR NEW.verification_name_matched IS DISTINCT FROM true THEN

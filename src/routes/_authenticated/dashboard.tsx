@@ -284,7 +284,7 @@ function Dashboard() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             {isBusiness && (
-              <section className="rounded-xl bg-card p-6 shadow-card">
+              <section id="viewings" className="rounded-xl bg-card p-6 shadow-card">
                 <h2 className="text-lg font-bold">Viewing requests</h2>
                 {incoming.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No viewing requests yet.</p> : (
                   <ul className="mt-3 divide-y divide-border">
@@ -327,7 +327,7 @@ function Dashboard() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           {l.sponsored && <span className="rounded bg-accent px-2 py-0.5 text-xs text-accent-foreground">Sponsored</span>}
-                          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded bg-orange-500 px-2 py-0.5 text-xs text-white">Featured through {new Date(l.featured_until).toLocaleDateString("en-NG")}</span>}
+                          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded bg-primary px-2 py-0.5 text-xs text-white">Featured through {new Date(l.featured_until).toLocaleDateString("en-NG")}</span>}
                           <span className={`rounded px-2 py-0.5 text-xs capitalize ${STATUS_STYLE[l.status] ?? ""}`}>{l.status === "pending" ? "Waiting for Admin Approval" : l.status === "rejected" ? `Rejected${l.rejection_reason ? `: ${l.rejection_reason}` : ""}` : "Approved"}</span>
                           {l.status === "approved" && <span className={`rounded px-2 py-0.5 text-xs capitalize ${STATUS_STYLE[l.availability_status] ?? ""}`}>{l.availability_status}</span>}
                           {l.status === "approved" && l.availability_status === "available" && <button onClick={() => void setListingAvailability(l.id, "rented")} className="text-xs text-muted-foreground underline">Mark as Rented</button>}
@@ -352,7 +352,7 @@ function Dashboard() {
               {newListingsToday.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No new approved listings today. <Link to="/listings" className="text-primary underline">Browse all properties</Link>.</p> : <ul className="mt-3 divide-y divide-border">{newListingsToday.map((listing) => <li key={listing.id} className="py-3"><Link to="/listings/$id" params={{ id: listing.id }} className="font-medium text-primary hover:underline">{listing.title}</Link><p className="text-xs text-muted-foreground">{formatNaira(listing.price)} · {listing.city}, {listing.state}</p></li>)}</ul>}
             </section>}
 
-            <section className="rounded-xl bg-card p-6 shadow-card">
+            <section id="viewings" className="rounded-xl bg-card p-6 shadow-card">
               <h2 className="text-lg font-bold">Viewings I've requested</h2>
               {mine.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">None yet. <Link to="/listings" className="text-primary">Browse properties</Link>.</p> : (
                 <ul className="mt-3 divide-y divide-border">

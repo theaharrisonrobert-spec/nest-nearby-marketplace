@@ -30,7 +30,7 @@ function Help() {
           </details>
         ))}
       </div>
-      <p>Still need help? <Link to="/contact" className="font-medium text-primary">Contact us</Link>.</p>
+      <p>Still need help? Visit <Link to="/support" className="font-medium text-primary">RentReady Support</Link> or <Link to="/contact" className="font-medium text-primary">contact us</Link>.</p>
     </InfoPage>
   );
 }

@@ -184,6 +184,7 @@ export type Database = {
           account_review_required: boolean
           approval_status: string
           approved_at: string | null
+          avatar_url: string | null
           agency_name: string | null
           agency_verified: boolean
           created_at: string
@@ -196,6 +197,7 @@ export type Database = {
           is_blocked: boolean
           phone: string | null
           phone_verified_at: string | null
+          notification_preferences: Json
           rejection_reason: string | null
           professional_type: string | null
           property_location: string | null
@@ -211,6 +213,7 @@ export type Database = {
           account_review_required?: boolean
           approval_status?: string
           approved_at?: string | null
+          avatar_url?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -223,6 +226,7 @@ export type Database = {
           is_blocked?: boolean
           phone?: string | null
           phone_verified_at?: string | null
+          notification_preferences?: Json
           rejection_reason?: string | null
           professional_type?: string | null
           property_location?: string | null
@@ -238,6 +242,7 @@ export type Database = {
           account_review_required?: boolean
           approval_status?: string
           approved_at?: string | null
+          avatar_url?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -250,6 +255,7 @@ export type Database = {
           is_blocked?: boolean
           phone?: string | null
           phone_verified_at?: string | null
+          notification_preferences?: Json
           rejection_reason?: string | null
           professional_type?: string | null
           property_location?: string | null
