@@ -1,5 +1,8 @@
 project_id = "rcqbjuqapxdgkkdfjysm"
 
+[functions.create-paystack-checkout]
+verify_jwt = true
+
 [functions.paystack-webhook]
 verify_jwt = false
 

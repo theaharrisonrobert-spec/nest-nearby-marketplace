@@ -56,7 +56,7 @@ Deno.serve(async (request) => {
   }
 
   const origin = request.headers.get("origin") ?? "";
-  const appUrl = Deno.env.get("APP_URL") ?? (origin.startsWith("https://") && new URL(origin).hostname.endsWith("workers.dev") ? origin : "http://localhost:5173");
+  const appUrl = Deno.env.get("APP_URL") ?? (origin.startsWith("https://") && (new URL(origin).hostname.endsWith("workers.dev") || new URL(origin).hostname.endsWith("pages.dev")) ? origin : "https://rentready-4g1.pages.dev");
   const reference = `RR-${crypto.randomUUID().replaceAll("-", "").toUpperCase()}`;
   const amount = prices[plan];
   const { error: insertError } = await service.from("subscriptions").insert({
