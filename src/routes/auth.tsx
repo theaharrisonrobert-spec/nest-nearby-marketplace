@@ -137,7 +137,8 @@ function AuthPage() {
     event.preventDefault();
     if (busy) return;
     if (!validNigerianPhone(phone)) { toast.error("Enter a valid Nigerian phone number"); return; }
-    const isProfessional = accountRole === "landlord";
+    const selectedRole: AccountType = accountRole === "landlord" ? "landlord" : "tenant";
+    const isProfessional = selectedRole === "landlord";
     if (isProfessional && !validProfessionalPassword(password)) { toast.error("Use at least 8 characters with uppercase and lowercase letters, a number, and a special character"); return; }
     if (!isProfessional && !validPassword(password)) { toast.error("Use at least 8 characters with both letters and numbers"); return; }
     if (isProfessional && !professionalType) { toast.error("Select your professional category"); return; }
@@ -155,8 +156,8 @@ function AuthPage() {
             full_name: isProfessional ? `${firstName.trim()} ${lastName.trim()}` : fullName.trim(),
             phone: phone.trim(),
             ...(isProfessional ? { professional_type: professionalType, phone_extension: phoneExtension.trim() || null } : {}),
-            role: accountRole,
-            account_type: accountRole,
+            role: selectedRole,
+            account_type: selectedRole,
             role_selected: true,
           },
         },
