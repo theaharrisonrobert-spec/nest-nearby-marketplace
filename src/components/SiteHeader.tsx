@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BadgeCheck, ChevronDown, Heart, Home as HomeIcon, Menu, User, X } from "lucide-react";
+import { BadgeCheck, ChevronDown, Heart, Home as HomeIcon, Menu, Search, Settings as SettingsIcon, User, UserRound, X, MessageSquare } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -61,10 +61,22 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
           <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-primary">Short Let</Link>
           <Link to="/landlords" className="text-sm font-medium hover:text-primary">Agents</Link>
         </nav>}
-        <div className={home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end"}>
+        <div className={(home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end") + " relative"}>
           {home && <Link to="/listings" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
-          {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="My account" aria-expanded={account} onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
           {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
+          {account && user && <section role="menu" aria-label="Account menu" className="absolute right-0 top-14 z-50 max-h-[calc(100dvh-6rem)] w-72 overflow-y-auto rounded-xl border border-border bg-card p-3 text-card-foreground shadow-card">
+            <div className="border-b border-border px-2 pb-3"><p className="font-semibold">{profile?.full_name || "My account"}</p>{profile?.verification_status === "approved" && <span className="mt-1 flex items-center gap-1 text-sm text-primary"><BadgeCheck className="h-4 w-4" />Verified identity</span>}</div>
+            <Link role="menuitem" to="/profile" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Profile</Link>
+            <Link role="menuitem" to="/settings" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Settings</Link>
+            <Link role="menuitem" to="/dashboard" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Your dashboard</Link>
+            {profile?.account_type === "landlord" && <><Link role="menuitem" to="/my-listings" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Your listings</Link><Link role="menuitem" to="/dashboard" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Promote your listing</Link></>}
+            <Link role="menuitem" to="/dashboard" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Tours & viewings</Link>
+            <Link role="menuitem" to="/messages" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Inbox</Link>
+            <Link role="menuitem" to="/verify" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">{profile?.verification_status === "approved" ? "Identity verified" : "Identity verification"}</Link>
+            {isAdmin && <Link role="menuitem" to="/admin" onClick={close} className="block rounded-lg px-3 py-3 font-semibold hover:bg-muted">Admin dashboard</Link>}
+            <Button role="menuitem" variant="ghost" onClick={signOut} className="h-12 w-full justify-start px-3 font-semibold">Log out</Button>
+          </section>}
         </div>
       </div>
     </header>
@@ -77,26 +89,24 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         <Link to="/listings" search={{ purpose: "short-let" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Short Let</Link>
         <Link to="/landlords" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Agents</Link>
         <Link to="/post" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Post Property</Link>
-        {!user ? <Link to="/auth" search={{ mode: "signin" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Sign in</Link> : <Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">My account</Link>}
+        {!user ? <Link to="/auth" search={{ mode: "signin" }} onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Sign in</Link> : <><Link to="/profile" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Profile</Link><Link to="/settings" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">Settings</Link><Link to="/dashboard" onClick={close} className="flex min-h-20 items-center border-b border-border px-6 text-xl">My account</Link></>}
         <details className="group border-b border-border"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between px-6 text-xl">Browse by property type<ChevronDown className="h-6 w-6 text-primary group-open:rotate-180" /></summary><div className="grid gap-4 bg-muted/40 px-6 py-5 sm:grid-cols-2">{CATEGORIES.map(c => <Link key={c.name} to="/listings" search={{ category: c.name }} onClick={close}>{c.name}</Link>)}</div></details>
       </nav>
     </div>}
-    {account && user && <div className="fixed inset-0 z-50 bg-ink/30" onClick={close}><section role="dialog" aria-modal="true" aria-label="Account menu" onClick={e => e.stopPropagation()} className="absolute inset-x-0 top-20 mx-auto max-w-lg rounded-lg bg-card px-5 py-4 text-card-foreground shadow-card">
-      <div className="flex items-center justify-between border-b border-border pb-3"><div><p className="font-semibold">{profile?.full_name || "My account"}</p>{profile?.verification_status === "approved" && <span className="mt-1 flex items-center gap-1 text-sm text-primary"><BadgeCheck className="h-4 w-4" />Verified identity</span>}</div><Button variant="ghost" size="icon" aria-label="Close account menu" onClick={close}><X /></Button></div>
-      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Your dashboard</Link>
-      {profile?.account_type === "landlord" && <><Link to="/my-listings" onClick={close} className="block py-4 text-lg font-semibold">Your listings</Link><Link to="/dashboard" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Promote your listing</Link></>}
-      <Link to="/dashboard" onClick={close} className="block py-4 text-lg font-semibold">Tours & viewings</Link><Link to="/messages" onClick={close} className="block border-b border-border py-4 text-lg font-semibold">Inbox</Link>
-      <Link to="/verify" onClick={close} className="block py-4 text-lg font-semibold">{profile?.verification_status === "approved" ? "Identity verified" : "Identity verification"}</Link>
-      {isAdmin && <Link to="/admin" onClick={close} className="block py-4 text-lg font-semibold">Admin dashboard</Link>}
-      <Button variant="ghost" onClick={signOut} className="h-14 w-full justify-start border-t border-border px-0 text-lg font-semibold">Sign out</Button>
-    </section></div>}
+    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-5 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(26,26,26,0.08)] backdrop-blur lg:hidden">
+      <Link to="/" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><HomeIcon className="h-5 w-5" />Home</Link>
+      <Link to="/listings" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><Search className="h-5 w-5" />Search</Link>
+      <Link to="/messages" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><MessageSquare className="h-5 w-5" />Messages</Link>
+      <Link to="/profile" className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-primary"><UserRound className="h-5 w-5" />Profile</Link>
+      <Link to="/settings" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><SettingsIcon className="h-5 w-5" />Settings</Link>
+    </nav>
   </>;
 }
 
 export function SiteFooter() {
   return (
     <footer className="bg-ink text-ink-foreground">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 pt-12 pb-28 md:grid-cols-4 md:py-12">
         <div>
           <Logo light />
           <p className="mt-4 text-sm text-ink-foreground/70">Your Space. Your Choice. Your Next Move. Connecting Properties, People, and Opportunities.</p>
@@ -130,7 +140,7 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-ink-foreground/10 py-5 text-center text-xs text-ink-foreground/60">© 2026 RentReady.ng All rights reserved.</div>
+      <div className="border-t border-ink-foreground/10 px-5 pt-5 pb-24 text-center text-xs text-ink-foreground/60 md:py-5">© 2026 RentReady.ng All rights reserved.</div>
     </footer>
   );
 }

@@ -50,7 +50,7 @@ export function SupportWidget() {
   }
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-semibold text-white shadow-xl hover:bg-primary/90" aria-label="Open RentReady support bot">
+    <button type="button" onClick={() => setOpen(true)} className="fixed bottom-20 right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 py-3 font-semibold text-white shadow-xl hover:bg-primary/90 sm:bottom-5 sm:right-5" aria-label="Open RentReady support bot">
       <LifeBuoy className="h-5 w-5" /> Support
     </button>
     {open && <div className="fixed inset-0 z-[70] flex items-end justify-end bg-black/25 p-0 sm:items-end sm:p-5" onClick={() => setOpen(false)}>
