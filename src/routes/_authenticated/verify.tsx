@@ -33,13 +33,21 @@ type Profile = {
   phone: string | null;
 };
 
-const ID_TYPES = ["National ID (NIN)"];
+const ID_TYPES = ["National ID (NIN)", "Driver's License", "International Passport", "Voter's Card (PVC)", "National Identity Card"] as const;
+const ID_NUMBER_FIELDS: Record<string, { label: string; placeholder: string; numeric?: boolean }> = {
+  "National ID (NIN)": { label: "NIN", placeholder: "Enter your 11-digit NIN", numeric: true },
+  "Driver's License": { label: "Driver's License Number", placeholder: "Enter your Driver's License Number" },
+  "International Passport": { label: "Passport Number", placeholder: "Enter your Passport Number" },
+  "Voter's Card (PVC)": { label: "Voter's Card Number / VIN", placeholder: "Enter your Voter's Card Number" },
+  "National Identity Card": { label: "ID Card Number", placeholder: "Enter your ID Card Number" },
+};
 
 function VerifyPage() {
   const { user } = Route.useRouteContext();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<"upload" | "summary">("upload");
+  const [selectedIdType, setSelectedIdType] = useState<string>(ID_TYPES[0]);
 
   const refreshProfile = useCallback(async () => {
     const { data, error } = await supabase.from("profiles")
@@ -68,12 +76,14 @@ function VerifyPage() {
     event.preventDefault();
     if (!profile) { toast.error("Your profile is still loading. Try again in a moment."); return; }
     const form = new FormData(event.currentTarget);
-    const nin = String(form.get("id_number") ?? "").replace(/\D/g, "");
+    const idType = String(form.get("id_type") ?? ID_TYPES[0]);
+    const rawIdNumber = String(form.get("id_number") ?? "").trim();
+    const idNumber = idType === "National ID (NIN)" ? rawIdNumber.replace(/\D/g, "") : rawIdNumber;
     const idValue = form.get("document");
     const selfieValue = form.get("selfie");
     const idFile = idValue instanceof File ? idValue : null;
     const selfieFile = selfieValue instanceof File ? selfieValue : null;
-    const validationError = validateVerificationUploads({ accountType: profile.account_type, registeredName: profile.full_name, nin, idFile, selfieFile });
+    const validationError = validateVerificationUploads({ accountType: profile.account_type, registeredName: profile.full_name, idType, idNumber, idFile, selfieFile });
     if (validationError) { toast.error(validationError); return; }
     if (!idFile || !selfieFile) return;
 
@@ -89,13 +99,13 @@ function VerifyPage() {
       if (selfieUpload.error) { toast.error("Selfie upload failed — check the file and try again"); return; }
 
       const { error } = await supabase.from("profiles").update({
-        id_type: String(form.get("id_type")),
-        id_number: nin,
+        id_type: idType,
+        id_number: idNumber,
         id_document_path: idPath,
         selfie_document_path: selfiePath,
       }).eq("id", user.id);
       if (error) { toast.error(error.message); return; }
-      setProfile((current) => current && { ...current, id_type: String(form.get("id_type")), id_number: nin, id_document_path: idPath, selfie_document_path: selfiePath });
+      setProfile((current) => current && { ...current, id_type: idType, id_number: idNumber, id_document_path: idPath, selfie_document_path: selfiePath });
       setStep("summary");
       toast.success("Uploads complete. Review your summary below.");
     } catch (error) {
@@ -160,7 +170,7 @@ function VerifyPage() {
             <dl className="grid gap-3 rounded-lg bg-muted/40 p-4 text-sm sm:grid-cols-2">
               <div><dt className="text-muted-foreground">Name</dt><dd className="font-medium">{profile?.full_name || "Not set"}</dd></div>
               <div><dt className="text-muted-foreground">ID type</dt><dd className="font-medium">{profile?.id_type || "National ID (NIN)"}</dd></div>
-              <div><dt className="text-muted-foreground">NIN</dt><dd className="font-medium">•••••••{profile?.id_number?.slice(-4)}</dd></div>
+              <div><dt className="text-muted-foreground">{ID_NUMBER_FIELDS[profile?.id_type || ""]?.label || "ID number"}</dt><dd className="font-medium">•••••••{profile?.id_number?.slice(-4)}</dd></div>
               <div><dt className="text-muted-foreground">Uploads</dt><dd className="font-medium">ID document + selfie saved</dd></div>
             </dl>
             {isTenant ? (
@@ -190,14 +200,14 @@ function VerifyPage() {
             <div><label className={label}>Phone number <span className="font-normal text-muted-foreground">(optional for identity review)</span></label><p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">{profile?.phone || "No phone number on profile"}</p></div>
             <div>
               <label className={label}>ID type</label>
-              <select name="id_type" required className={input}>{ID_TYPES.map((type) => <option key={type}>{type}</option>)}</select>
+              <select name="id_type" required className={input} value={selectedIdType} onChange={(event) => setSelectedIdType(event.target.value)}>{ID_TYPES.map((type) => <option key={type}>{type}</option>)}</select>
             </div>
             <div>
-              <label className={label}>NIN</label>
-              <input name="id_number" required inputMode="numeric" minLength={11} maxLength={11} placeholder="Enter your 11-digit NIN" className={input} />
+              <label className={label}>{ID_NUMBER_FIELDS[selectedIdType]?.label}</label>
+              <input key={selectedIdType} name="id_number" required inputMode={selectedIdType === "National ID (NIN)" ? "numeric" : "text"} minLength={selectedIdType === "National ID (NIN)" ? 11 : 4} maxLength={selectedIdType === "National ID (NIN)" ? 11 : 32} pattern={selectedIdType === "National ID (NIN)" ? "[0-9]{11}" : "[A-Za-z0-9 /-]{4,32}"} placeholder={ID_NUMBER_FIELDS[selectedIdType]?.placeholder} className={input} />
             </div>
             <div>
-              <label className={label}>Photo or scan of your ID</label>
+              <label className={label}>Photo of your {selectedIdType === "National ID (NIN)" ? "NIN card" : selectedIdType}</label>
               <input name="document" type="file" required accept="image/jpeg,image/png,image/webp,application/pdf" className="text-sm" />
               <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP or PDF, up to 10 MB. Only you and the review team can access it.</p>
             </div>

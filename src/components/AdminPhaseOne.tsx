@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Tab = "people-waiting" | "listings-waiting" | "all-people" | "all-listings";
 type Person = { id: string; email: string; full_name: string | null; phone: string | null; account_type: string; approval_status: string; rejection_reason: string | null; is_blocked: boolean; created_at: string };
-type VerificationMeta = { id: string; id_type: string | null; id_document_path: string | null; selfie_document_path: string | null; verification_status: string };
+type VerificationMeta = { id: string; id_type: string | null; id_number: string | null; id_document_path: string | null; selfie_document_path: string | null; verification_status: string };
 type AdminStats = { total_users: number; landlords: number; tenants: number; pending_approvals: number; available_listings: number; pending_listings: number; rented_listings: number; expired_listings: number; signups_today: number; listings_today: number; premium_today: number; monthly_revenue_ngn: number; open_support_tickets: number };
 
 const tabs: { id: Tab; label: string }[] = [
@@ -47,7 +47,7 @@ export function AdminPhaseOne() {
     enabled: people.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles")
-        .select("id, id_type, id_document_path, selfie_document_path, verification_status")
+        .select("id, id_type, id_number, id_document_path, selfie_document_path, verification_status")
         .in("id", people.map((person) => person.id));
       if (error) throw error;
       return (data ?? []) as VerificationMeta[];

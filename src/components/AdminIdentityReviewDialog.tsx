@@ -19,6 +19,7 @@ export type AdminReviewPerson = {
   created_at: string;
   approval_status?: string;
   id_type: string | null;
+  id_number?: string | null;
   id_document_path: string | null;
   selfie_document_path: string | null;
   verification_status: string;
@@ -199,6 +200,7 @@ export function AdminIdentityReviewDialog({
               <div><dt className="text-muted-foreground">Role</dt><dd className="font-medium capitalize">{person.account_type}</dd></div>
               <div><dt className="text-muted-foreground">Date joined</dt><dd className="font-medium">{new Date(person.created_at).toLocaleString("en-NG")}</dd></div>
               <div><dt className="text-muted-foreground">ID type</dt><dd className="font-medium">{person.id_type || "Not provided"}</dd></div>
+              {mode === "identity" && <div><dt className="text-muted-foreground">ID number</dt><dd className="break-all font-medium">{person.id_number || "Not provided"}</dd></div>}
               {mode === "identity" && <div><dt className="text-muted-foreground">Verification fee</dt><dd className="font-medium">{person.account_type === "tenant" ? "Free (Tenant)" : person.verification_fee_paid ? "Paid" : "Not Paid"}</dd></div>}
             </dl>
 

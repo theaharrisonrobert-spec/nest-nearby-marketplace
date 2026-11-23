@@ -5,7 +5,8 @@ export type VerificationFile = Pick<File, "type" | "size">;
 export type VerificationUploadInput = {
   accountType: string | null | undefined;
   registeredName: string | null | undefined;
-  nin: string;
+  idType: string;
+  idNumber: string;
   idFile: VerificationFile | null;
   selfieFile: VerificationFile | null;
 };
@@ -15,7 +16,11 @@ const selfieMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export function validateVerificationUploads(input: VerificationUploadInput): string | null {
   if (input.accountType !== "landlord" && input.accountType !== "tenant") return "Choose Tenant or Landlord before submitting identity verification.";
-  if (!/^\d{11}$/.test(input.nin)) return "Enter a valid 11-digit NIN.";
+  const allowedIdTypes = ["National ID (NIN)", "Driver's License", "International Passport", "Voter's Card (PVC)", "National Identity Card"];
+  if (!allowedIdTypes.includes(input.idType)) return "Choose a valid ID type.";
+  if (input.idType === "National ID (NIN)" ? !/^\d{11}$/.test(input.idNumber) : !/^[A-Za-z0-9 /-]{4,32}$/.test(input.idNumber)) {
+    return input.idType === "National ID (NIN)" ? "Enter a valid 11-digit NIN." : "Enter a valid ID number (4–32 letters or numbers).";
+  }
   if (!input.registeredName?.trim()) return "Add your name to your account before identity review.";
   if (!input.idFile) return "Please upload a photo or scan of your ID document.";
   if (!idMimeTypes.has(input.idFile.type)) return "Upload your ID as a JPG, PNG, WebP, or PDF file.";

@@ -50,7 +50,7 @@ function AdminPage() {
     setIsAdmin(!!role);
     if (!role) return;
     const [{ data: p, error: pError }, { data: directory, error: directoryError }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_document_path, selfie_document_path, verification_status, verification_fee_paid, created_at")
+      supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_number, id_document_path, selfie_document_path, verification_status, verification_fee_paid, created_at")
         .in("account_type", ["tenant", "landlord"]).neq("verification_status", "approved").order("created_at", { ascending: false }),
       supabase.rpc("admin_user_directory", { _search: null }),
       supabase.from("admin_notifications").select("id, kind, message, created_at").order("created_at", { ascending: false }).limit(50),

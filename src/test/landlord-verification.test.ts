@@ -4,7 +4,8 @@ import { MAX_VERIFICATION_FILE_SIZE, validateVerificationUploads, type Verificat
 const validInput: VerificationUploadInput = {
   accountType: "landlord",
   registeredName: "Alex Sample",
-  nin: "12345678901",
+  idType: "National ID (NIN)",
+  idNumber: "12345678901",
   idFile: { type: "image/png", size: 1024 },
   selfieFile: { type: "image/jpeg", size: 2048 },
 };
@@ -17,7 +18,7 @@ describe("identity verification upload validation", () => {
 
   it("rejects accounts without a selected role and invalid NINs", () => {
     expect(validateVerificationUploads({ ...validInput, accountType: "" })).toMatch(/Choose Tenant or Landlord/i);
-    expect(validateVerificationUploads({ ...validInput, nin: "123" })).toMatch(/11-digit NIN/i);
+    expect(validateVerificationUploads({ ...validInput, idType: "National ID (NIN)", idNumber: "123" })).toMatch(/11-digit NIN/i);
   });
 
   it("requires the registered name", () => {
