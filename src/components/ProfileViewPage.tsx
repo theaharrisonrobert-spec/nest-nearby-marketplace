@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
-import { CalendarDays, Home, UserRound } from "lucide-react";
+import { CalendarDays, Home, LayoutDashboard, MessageSquare, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +45,6 @@ export function ProfileViewPage({ user }: { user: User }) {
       return count ?? 0;
     },
   });
-
   useEffect(() => {
     let active = true;
     if (!profile?.avatar_url) { setPhotoUrl(null); return; }
@@ -92,6 +91,16 @@ export function ProfileViewPage({ user }: { user: User }) {
       <section className="grid gap-4 sm:grid-cols-2" aria-label="Account activity">
         <Link to="/my-listings" className={`${cardClass} flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-lg`}><span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-soft text-primary"><Home className="h-6 w-6" /></span><span><span className="block text-sm text-muted-foreground">My Listings</span><strong className="text-2xl">{listingCount}</strong></span></Link>
         <Link to="/dashboard" className={`${cardClass} flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-lg`}><span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-soft text-primary"><CalendarDays className="h-6 w-6" /></span><span><span className="block text-sm text-muted-foreground">My Bookings</span><strong className="text-2xl">{bookingCount}</strong></span></Link>
+      </section>
+      <section className={cardClass} aria-label="Account links">
+        <h2 className="text-lg font-bold">Your RentReady</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Link to="/dashboard" className="flex items-center gap-3 rounded-xl border border-border p-4 font-semibold hover:border-primary"><LayoutDashboard className="h-5 w-5 text-primary" />Dashboard</Link>
+          <Link to="/dashboard" hash="viewings" className="flex items-center gap-3 rounded-xl border border-border p-4 font-semibold hover:border-primary"><CalendarDays className="h-5 w-5 text-primary" />Tours</Link>
+          <Link to="/messages" className="flex items-center gap-3 rounded-xl border border-border p-4 font-semibold hover:border-primary"><MessageSquare className="h-5 w-5 text-primary" />Inbox</Link>
+          <Link to="/verify" className="flex items-center gap-3 rounded-xl border border-border p-4 font-semibold hover:border-primary"><ShieldCheck className="h-5 w-5 text-primary" />Verification</Link>
+          {isAdmin && <Link to="/admin" className="flex items-center gap-3 rounded-xl border border-border p-4 font-semibold hover:border-primary"><ShieldCheck className="h-5 w-5 text-primary" />Admin</Link>}
+        </div>
       </section>
     </main>
     <SiteFooter />

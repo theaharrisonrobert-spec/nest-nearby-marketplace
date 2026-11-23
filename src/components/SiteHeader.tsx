@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Heart, Home as HomeIcon, Menu, Search, User, UserRound, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Heart, Home as HomeIcon, Menu, MessageSquare, Search, User, UserRound, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,18 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
   const activeMobileTab = getActiveMobileTab(pathname);
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { data: unreadMessages = 0 } = useQuery({
+    queryKey: ["unread", user?.id],
+    enabled: !!user,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase.from("messages").select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id).is("read_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
   useEffect(() => {
     if (!open) {
       document.body.style.overflow = "";
@@ -50,7 +62,7 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         </nav>}
         <div className={(home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end") + " relative"}>
           {home && <Link to="/saved" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
-          {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {user ? <Button asChild variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")}><Link to="/profile" aria-label="Profile"><User /></Link></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
           {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
         </div>
       </div>
@@ -64,10 +76,11 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         {user && <button type="button" onClick={() => void signOut()} className="flex min-h-20 w-full items-center border-b border-border px-6 text-left text-xl">Log out</button>}
       </nav>
     </div>}
-    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-4 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(26,26,26,0.08)] backdrop-blur lg:hidden">
+    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-5 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(26,26,26,0.08)] backdrop-blur lg:hidden">
       <Link to="/" aria-current={activeMobileTab === "home" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "home" ? "text-primary" : "text-muted-foreground"}`}><HomeIcon className="h-5 w-5" />Home</Link>
       <Link to="/listings" aria-current={activeMobileTab === "search" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "search" ? "text-primary" : "text-muted-foreground"}`}><Search className="h-5 w-5" />Search</Link>
       <Link to="/saved" aria-current={activeMobileTab === "saved" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "saved" ? "text-primary" : "text-muted-foreground"}`}><Heart className="h-5 w-5" />Saved</Link>
+      <Link to="/messages" aria-current={activeMobileTab === "messages" ? "page" : undefined} aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : "Messages"} className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "messages" ? "text-primary" : "text-muted-foreground"}`}><MessageSquare className="h-5 w-5" />Messages{unreadMessages > 0 && <span aria-hidden="true" className="absolute right-1/4 top-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-white" />}</Link>
       <Link to="/profile" aria-current={activeMobileTab === "profile" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "profile" ? "text-primary" : "text-muted-foreground"}`}><UserRound className="h-5 w-5" />Profile</Link>
     </nav>
   </>;

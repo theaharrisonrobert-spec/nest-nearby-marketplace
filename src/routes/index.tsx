@@ -44,7 +44,7 @@ function Index() {
       return data ?? [];
     },
   });
-  return <div className="min-h-screen bg-background text-foreground">
+  return <div className="min-h-screen bg-background pb-56 text-foreground lg:pb-28">
     <SiteHeader home />
     <section className="relative flex min-h-[580px] items-center overflow-hidden bg-background sm:min-h-[640px]">
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-5 py-16 text-center md:py-24">
