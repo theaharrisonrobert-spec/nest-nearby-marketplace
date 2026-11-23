@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BadgeCheck, ChevronDown, Heart, Home as HomeIcon, Menu, Search, Settings as SettingsIcon, User, UserRound, X, MessageSquare } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/listings";
+import { getActiveMobileTab } from "@/lib/mobile-navigation";
 
 export function Logo({ light = false, homeMark = false }: { light?: boolean; homeMark?: boolean }) {
   return homeMark
@@ -17,6 +18,8 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
   const [open, setOpen] = useState(false);
   const [account, setAccount] = useState(false);
   const { user } = useSession();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeMobileTab = getActiveMobileTab(pathname);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile } = useQuery({
@@ -94,11 +97,11 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
       </nav>
     </div>}
     <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-5 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(26,26,26,0.08)] backdrop-blur lg:hidden">
-      <Link to="/" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><HomeIcon className="h-5 w-5" />Home</Link>
-      <Link to="/listings" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><Search className="h-5 w-5" />Search</Link>
-      <Link to="/messages" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><MessageSquare className="h-5 w-5" />Messages</Link>
-      <Link to="/profile" className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-primary"><UserRound className="h-5 w-5" />Profile</Link>
-      <Link to="/settings" className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground"><SettingsIcon className="h-5 w-5" />Settings</Link>
+      <Link to="/" aria-current={activeMobileTab === "home" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "home" ? "text-primary" : "text-muted-foreground"}`}><HomeIcon className="h-5 w-5" />Home</Link>
+      <Link to="/listings" aria-current={activeMobileTab === "search" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "search" ? "text-primary" : "text-muted-foreground"}`}><Search className="h-5 w-5" />Search</Link>
+      <Link to="/messages" aria-current={activeMobileTab === "messages" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "messages" ? "text-primary" : "text-muted-foreground"}`}><MessageSquare className="h-5 w-5" />Messages</Link>
+      <Link to="/profile" aria-current={activeMobileTab === "profile" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "profile" ? "text-primary" : "text-muted-foreground"}`}><UserRound className="h-5 w-5" />Profile</Link>
+      <Link to="/settings" aria-current={activeMobileTab === "settings" ? "page" : undefined} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${activeMobileTab === "settings" ? "text-primary" : "text-muted-foreground"}`}><SettingsIcon className="h-5 w-5" />Settings</Link>
     </nav>
   </>;
 }

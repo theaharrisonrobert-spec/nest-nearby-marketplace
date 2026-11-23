@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { ProfileSettingsPage } from "@/components/ProfileSettingsPage";
+import { ProfileViewPage } from "@/components/ProfileViewPage";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/profile")({
@@ -14,5 +14,5 @@ export const Route = createFileRoute("/profile")({
 
 function ProfileRoute() {
   const { user } = Route.useRouteContext();
-  return <ProfileSettingsPage user={user} />;
+  return <ProfileViewPage user={user} />;
 }

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, ShieldCheck, UserRound } from "lucide-react";
+import { Camera, UserRound } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,16 +50,8 @@ export function ProfileSettingsPage({ user }: { user: User }) {
     queryKey: ["settings-profile", user.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles")
-        .select("full_name, phone, phone_verified_at, avatar_url, notification_preferences, account_type, verification_status, id_document_path")
+        .select("full_name, phone, phone_verified_at, avatar_url, notification_preferences")
         .eq("id", user.id).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-  const { data: isAdmin = false } = useQuery({
-    queryKey: ["settings-admin", user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       if (error) throw error;
       return data;
     },
@@ -89,19 +81,6 @@ export function ProfileSettingsPage({ user }: { user: User }) {
   }, [profile?.avatar_url]);
 
   const notifications = useMemo(() => ({ ...DEFAULT_NOTIFICATIONS, ...(profile?.notification_preferences as Partial<typeof DEFAULT_NOTIFICATIONS> | null) }), [profile?.notification_preferences]);
-  const role = isAdmin ? "Admin" : profile?.account_type === "landlord" ? "Landlord" : "Tenant";
-  const verificationStatus = profile?.verification_status === "approved"
-    ? "Verified"
-    : profile?.verification_status === "pending"
-      ? "Pending Review"
-      : profile?.verification_status === "rejected"
-        ? "Rejected"
-        : profile?.id_document_path
-          ? "Pending Review"
-        : profile?.verification_status === "unverified"
-          ? "Awaiting ID Upload"
-          : "Not Started";
-
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile) return;
@@ -126,6 +105,7 @@ export function ProfileSettingsPage({ user }: { user: User }) {
       if (error) throw error;
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["settings-profile", user.id] }),
+        qc.invalidateQueries({ queryKey: ["profile-view", user.id] }),
         qc.invalidateQueries({ queryKey: ["home-greeting-profile", user.id] }),
         qc.invalidateQueries({ queryKey: ["account-menu-profile", user.id] }),
         qc.invalidateQueries({ queryKey: ["profile", user.id] }),
@@ -198,10 +178,10 @@ export function ProfileSettingsPage({ user }: { user: User }) {
   return <div className="min-h-screen bg-background text-foreground">
     <SiteHeader />
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-28 sm:px-5 sm:py-12">
-      <div><p className="text-sm font-semibold uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 text-3xl font-bold">Profile & Settings</h1><p className="mt-2 text-muted-foreground">Manage your details, security, and notifications.</p></div>
+      <div><p className="text-sm font-semibold uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 text-3xl font-bold">Settings</h1><p className="mt-2 text-muted-foreground">Edit your details, security, and notifications.</p></div>
       {isLoading ? <div className={`${cardClass} text-muted-foreground`}>Loading your profile…</div> : <>
         <section className={cardClass} aria-labelledby="profile-heading">
-          <h2 id="profile-heading" className="text-xl font-bold">Profile</h2>
+          <h2 id="profile-heading" className="text-xl font-bold">Edit Profile</h2>
           <div className="mt-5 flex items-center gap-4">
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-brand-soft text-primary">
               {photoPreview || storedPhotoUrl ? <img src={photoPreview ?? storedPhotoUrl ?? ""} alt="Profile" className="h-full w-full object-cover" /> : <UserRound className="h-9 w-9" />}
@@ -216,7 +196,6 @@ export function ProfileSettingsPage({ user }: { user: User }) {
             <label className="grid gap-1.5 text-sm font-medium">Last Name<Input autoComplete="family-name" className={fieldClass} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label>
             <label className="grid gap-1.5 text-sm font-medium">Phone<Input type="tel" autoComplete="tel" className={fieldClass} value={phone} onChange={(event) => setPhone(event.target.value)} /><span className="text-xs font-normal text-muted-foreground">{profile?.phone_verified_at ? "Your phone is verified and can’t be changed here." : ""}</span></label>
             <label className="grid gap-1.5 text-sm font-medium">Email<Input type="email" value={user.email ?? ""} disabled className={`${fieldClass} cursor-not-allowed bg-muted text-muted-foreground`} /><span className="text-xs font-normal text-muted-foreground">Email can’t be edited here.</span></label>
-            <div className="flex items-center gap-2 sm:col-span-2"><span className="text-sm font-medium">Role</span><span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-primary">{role}</span></div>
             <Button type="submit" disabled={profileSaving} className="h-12 bg-primary font-semibold text-white hover:bg-primary/90 sm:col-span-2">{profileSaving ? "Saving…" : "Save profile"}</Button>
           </form>
         </section>
@@ -235,12 +214,6 @@ export function ProfileSettingsPage({ user }: { user: User }) {
           <h2 id="notifications-heading" className="text-xl font-bold">Notifications</h2>
           <div className="mt-3 divide-y divide-border">{NOTIFICATIONS.map(({ key, title, detail }) => <div key={key} className="flex min-h-[76px] items-center justify-between gap-4 py-3"><div><p className="font-semibold">{title}</p><p className="text-sm text-muted-foreground">{detail}</p></div><Switch checked={notifications[key]} disabled={notificationSaving !== null} onCheckedChange={(checked) => void toggleNotification(key, checked)} aria-label={`${title} notifications`} /></div>)}</div>
         </section>
-
-        {profile?.account_type === "landlord" && <section className={cardClass} aria-labelledby="verification-heading">
-          <h2 id="verification-heading" className="text-xl font-bold">Landlord verification</h2>
-          <p className="mt-3 flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" />Verification status: <strong>{verificationStatus}</strong></p>
-          <Button asChild className="mt-5 h-12 bg-primary font-semibold text-white hover:bg-primary/90"><Link to="/verify">{profile.id_document_path ? "Go to Verification" : "Upload ID"}</Link></Button>
-        </section>}
 
         <section className={`${cardClass} border-destructive/30`} aria-labelledby="danger-heading">
           <h2 id="danger-heading" className="text-xl font-bold text-destructive">Danger zone</h2>
