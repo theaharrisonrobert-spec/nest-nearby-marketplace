@@ -48,26 +48,34 @@ function VerifyPage() {
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<"upload" | "summary">("upload");
   const [selectedIdType, setSelectedIdType] = useState<string>(ID_TYPES[0]);
+  const [paymentChecking, setPaymentChecking] = useState(false);
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (silent = false) => {
     const { data, error } = await supabase.from("profiles")
       .select("full_name, account_type, verification_status, id_type, id_number, id_document_path, selfie_document_path, verification_fee_paid, phone")
       .eq("id", user.id).maybeSingle();
-    if (error) { toast.error("Could not load your verification details"); return; }
+    if (error) { if (!silent) toast.error("Could not load your verification details"); return false; }
     if (data) {
       setProfile(data);
       setStep(data.id_number && data.id_document_path && data.selfie_document_path ? "summary" : "upload");
     }
+    return !!data?.verification_fee_paid;
   }, [user.id]);
 
   useEffect(() => { void refreshProfile(); }, [refreshProfile]);
   useEffect(() => {
     if (!new URLSearchParams(window.location.search).has("payment")) return;
+    setPaymentChecking(true);
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
-      void refreshProfile();
-      if (attempts >= 5) window.clearInterval(timer);
+      void refreshProfile(true).then((paid) => {
+        if (paid || attempts >= 40) {
+          window.clearInterval(timer);
+          setPaymentChecking(false);
+          if (!paid) toast.error("Payment confirmation has not arrived yet. If you completed checkout, refresh in a moment or contact support.");
+        }
+      });
     }, 1500);
     return () => window.clearInterval(timer);
   }, [refreshProfile]);
@@ -181,13 +189,15 @@ function VerifyPage() {
               <div className="rounded-lg bg-muted/50 p-4">
                 <h3 className="font-semibold">RentReady Verification Fee · ₦1,500</h3>
                 <p className="mt-1 text-sm text-muted-foreground">One-time fee covers manual ID + selfie review. Not monthly.</p>
-                <button type="button" onClick={() => void startPaidPlan("nin_verification")} className="mt-4 w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground">Pay RentReady Verification Fee · ₦1,500</button>
+                {paymentChecking && <p className="mt-3 text-sm text-muted-foreground" role="status">Confirming your payment… Submit for review will appear after payment is confirmed.</p>}
+                <button type="button" disabled={paymentChecking} onClick={() => void startPaidPlan("nin_verification")} className="mt-4 w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-wait disabled:opacity-60">Pay RentReady Verification Fee · ₦1,500</button>
               </div>
             )}
             <div className="flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={() => setStep("upload")} className="w-full rounded-lg border border-border py-3 font-medium">Edit uploads</button>
-              <button type="button" disabled={busy || (!isTenant && !profile?.verification_fee_paid)} onClick={() => void submitForReview()} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Submitting…" : "Submit for review"}</button>
+              {(isTenant || profile?.verification_fee_paid) && <button type="button" disabled={busy} onClick={() => void submitForReview()} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Submitting…" : "Submit for review"}</button>}
             </div>
+            {!isTenant && !profile?.verification_fee_paid && <p className="text-center text-xs text-muted-foreground">Submit for review will appear here after your payment is confirmed.</p>}
           </section>
         ) : (
           <form onSubmit={uploadForSummary} className="mt-8 space-y-4 rounded-xl bg-card p-6 shadow-card">

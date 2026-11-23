@@ -4,18 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 export type RentReadyPaidPlan = "landlord_premium" | "tenant_premium" | "featured_listing" | "nin_verification";
 
 export async function startPaidPlan(plan: RentReadyPaidPlan, listingId?: string) {
-  const { data, error } = await supabase.functions.invoke("create-paystack-checkout", {
-    body: { plan, ...(listingId ? { listing_id: listingId } : {}) },
-  });
-  if (error) {
-    toast.error(error.message || "Payment checkout is unavailable. Please try again later.");
-    return;
+  const unavailableMessage = plan === "nin_verification"
+    ? "Payment service is unavailable right now. Please try again later."
+    : "Payment checkout is unavailable. Please try again later.";
+  try {
+    const { data, error } = await supabase.functions.invoke("create-paystack-checkout", {
+      body: { plan, ...(listingId ? { listing_id: listingId } : {}) },
+    });
+    if (error) {
+      toast.error(unavailableMessage);
+      return;
+    }
+    if (!data || typeof data.authorization_url !== "string") {
+      toast.error(unavailableMessage);
+      return;
+    }
+    window.location.assign(data.authorization_url);
+  } catch {
+    toast.error(unavailableMessage);
   }
-  if (!data || typeof data.authorization_url !== "string") {
-    toast.error("Payment checkout is not configured yet. Please contact RentReady support.");
-    return;
-  }
-  window.location.assign(data.authorization_url);
 }
 
 export async function cancelPaidPlan(plan: "landlord_premium" | "tenant_premium") {
