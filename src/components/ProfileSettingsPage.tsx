@@ -106,6 +106,7 @@ export function ProfileSettingsPage({ user }: { user: User }) {
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["settings-profile", user.id] }),
         qc.invalidateQueries({ queryKey: ["profile-view", user.id] }),
+        qc.invalidateQueries({ queryKey: ["profile-header", user.id] }),
         qc.invalidateQueries({ queryKey: ["home-greeting-profile", user.id] }),
         qc.invalidateQueries({ queryKey: ["account-menu-profile", user.id] }),
         qc.invalidateQueries({ queryKey: ["profile", user.id] }),

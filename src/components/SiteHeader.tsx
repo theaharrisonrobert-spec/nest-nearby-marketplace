@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Heart, Home as HomeIcon, Menu, MessageSquare, Search, User, UserRound, X } from "lucide-react";
+import { Heart, Home as HomeIcon, Menu, MessageSquare, Search, UserRound, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
@@ -32,6 +32,19 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
       return count ?? 0;
     },
   });
+  const { data: headerProfile } = useQuery({
+    queryKey: ["profile-header", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle();
+      if (error) throw error;
+      if (!data?.avatar_url) return { fullName: data?.full_name ?? null, avatarUrl: null };
+      const { data: signed, error: signedError } = await supabase.storage.from("profile-photos").createSignedUrl(data.avatar_url, 60 * 60);
+      if (signedError) throw signedError;
+      return { fullName: data.full_name, avatarUrl: signed.signedUrl };
+    },
+  });
   useEffect(() => {
     if (!open) {
       document.body.style.overflow = "";
@@ -49,6 +62,7 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
     await navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
   }
   const close = () => setOpen(false);
+  const headerInitial = (headerProfile?.fullName?.trim() || (typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "") || user?.email || "?").charAt(0).toUpperCase();
   return <>
     <header className={(home ? "sticky top-0" : "relative") + " z-40 border-b border-border " + (home ? "bg-white text-foreground shadow-sm" : overlay ? "bg-transparent text-ink-foreground" : "bg-card text-card-foreground")}>
       <div className={home ? "mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-5" : "mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5"}>
@@ -62,7 +76,9 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         </nav>}
         <div className={(home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end") + " relative"}>
           {home && <Link to="/saved" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
-          {user ? <Button asChild variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")}><Link to="/profile" aria-label="Profile"><User /></Link></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {user ? <Button asChild variant="ghost" size="icon" className={"h-10 w-10 overflow-hidden rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")}><Link to="/profile" aria-label="Profile" className="flex h-full w-full items-center justify-center">
+            {headerProfile?.avatarUrl ? <img src={headerProfile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-lg font-bold">{headerInitial}</span>}
+          </Link></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
           {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
         </div>
       </div>

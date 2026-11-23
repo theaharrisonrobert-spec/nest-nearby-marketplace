@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
-import { CalendarDays, Home, LayoutDashboard, MessageSquare, ShieldCheck, UserRound } from "lucide-react";
+import type { ChangeEvent } from "react";
+import { CalendarDays, Camera, Home, LayoutDashboard, MessageSquare, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 const cardClass = "rounded-2xl border border-border bg-card p-5 shadow-card sm:p-7";
 
 export function ProfileViewPage({ user }: { user: User }) {
+  const qc = useQueryClient();
+  const photoInput = useRef<HTMLInputElement>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile-view", user.id],
     queryFn: async () => {
@@ -55,6 +60,49 @@ export function ProfileViewPage({ user }: { user: User }) {
 
   const [firstName = "", ...restName] = (profile?.full_name ?? "").trim().split(/\s+/).filter(Boolean);
   const lastName = restName.join(" ");
+  async function uploadPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPhotoError("Choose a JPEG, PNG, or WebP photo.");
+      input.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Choose a photo under 5 MB.");
+      input.value = "";
+      return;
+    }
+
+    setPhotoUploading(true);
+    setPhotoError("");
+    let uploadedPath: string | null = null;
+    let profileUpdated = false;
+    try {
+      const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      uploadedPath = `${user.id}/${crypto.randomUUID()}.${extension}`;
+      const { error: storageError } = await supabase.storage.from("profile-photos")
+        .upload(uploadedPath, file, { contentType: file.type, upsert: false });
+      if (storageError) throw storageError;
+      const { data: signed, error: signedError } = await supabase.storage.from("profile-photos").createSignedUrl(uploadedPath, 60 * 60);
+      if (signedError) throw signedError;
+      const { data: updated, error: updateError } = await supabase.from("profiles").update({ avatar_url: uploadedPath })
+        .eq("id", user.id).select("avatar_url").maybeSingle();
+      if (updateError) throw updateError;
+      if (!updated) throw new Error("Your profile could not be updated. Please try again.");
+      profileUpdated = true;
+      setPhotoUrl(signed.signedUrl);
+      qc.setQueryData(["profile-view", user.id], (current: typeof profile) => current ? { ...current, avatar_url: uploadedPath } : current);
+      await qc.invalidateQueries({ queryKey: ["profile-header", user.id] });
+    } catch (error) {
+      if (uploadedPath && !profileUpdated) void supabase.storage.from("profile-photos").remove([uploadedPath]);
+      setPhotoError(error instanceof Error ? error.message : "Could not upload your photo. Please try again.");
+    } finally {
+      setPhotoUploading(false);
+      input.value = "";
+    }
+  }
   const role = isAdmin ? "Admin" : profile?.account_type === "landlord" ? "Landlord" : "Tenant";
   const verificationStatus = profile?.verification_status === "approved"
     ? "Verified"
@@ -73,10 +121,15 @@ export function ProfileViewPage({ user }: { user: User }) {
       <section className={cardClass} aria-label="Profile details">
         {isLoading ? <p className="text-muted-foreground">Loading your profile…</p> : <>
           <div className="flex flex-wrap items-center gap-5">
-            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-brand-soft text-primary">
-              {photoUrl ? <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" /> : <UserRound className="h-10 w-10" />}
+            <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-soft text-primary sm:h-36 sm:w-36">
+              {photoUrl ? <img src={photoUrl} alt={`${firstName || "Profile"} profile photo`} className="h-full w-full object-cover" /> : <span className="text-5xl font-bold">{firstName.charAt(0).toUpperCase() || "?"}</span>}
             </div>
-            <div><h2 className="text-2xl font-bold">{[firstName, lastName].filter(Boolean).join(" ") || "Name not added"}</h2><span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-primary">{role}</span></div>
+            <div className="min-w-0"><h2 className="text-2xl font-bold">Hi, {firstName || "there"}</h2><span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-primary">{role}</span>
+              <div className="mt-4"><Button type="button" disabled={photoUploading} onClick={() => photoInput.current?.click()} className="h-11 bg-primary font-semibold text-white hover:bg-primary/90"><Camera className="mr-2 h-4 w-4" />{photoUploading ? "Uploading photo…" : "Edit / Change Photo"}</Button>
+                <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void uploadPhoto(event)} className="sr-only" aria-label="Choose profile photo" />
+                {photoError && <p role="alert" className="mt-2 max-w-sm text-sm text-destructive">{photoError}</p>}
+              </div>
+            </div>
           </div>
           <dl className="mt-7 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
             <div><dt className="text-sm text-muted-foreground">First Name</dt><dd className="mt-1 font-semibold">{firstName || "—"}</dd></div>
