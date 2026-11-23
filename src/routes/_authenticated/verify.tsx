@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { ShieldCheck, Clock, XCircle, UploadCloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { startPaidPlan } from "@/lib/payments";
 import { validateVerificationUploads } from "@/lib/landlord-verification";
 
 export const Route = createFileRoute("/_authenticated/verify")({
@@ -29,7 +28,6 @@ type Profile = {
   id_number: string | null;
   id_document_path: string | null;
   selfie_document_path: string | null;
-  verification_fee_paid: boolean;
   phone: string | null;
 };
 
@@ -48,37 +46,19 @@ function VerifyPage() {
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<"upload" | "summary">("upload");
   const [selectedIdType, setSelectedIdType] = useState<string>(ID_TYPES[0]);
-  const [paymentChecking, setPaymentChecking] = useState(false);
 
-  const refreshProfile = useCallback(async (silent = false) => {
+  const refreshProfile = useCallback(async () => {
     const { data, error } = await supabase.from("profiles")
-      .select("full_name, account_type, verification_status, id_type, id_number, id_document_path, selfie_document_path, verification_fee_paid, phone")
+      .select("full_name, account_type, verification_status, id_type, id_number, id_document_path, selfie_document_path, phone")
       .eq("id", user.id).maybeSingle();
-    if (error) { if (!silent) toast.error("Could not load your verification details"); return false; }
+    if (error) { toast.error("Could not load your verification details"); return; }
     if (data) {
       setProfile(data);
       setStep(data.id_number && data.id_document_path && data.selfie_document_path ? "summary" : "upload");
     }
-    return !!data?.verification_fee_paid;
   }, [user.id]);
 
   useEffect(() => { void refreshProfile(); }, [refreshProfile]);
-  useEffect(() => {
-    if (!new URLSearchParams(window.location.search).has("payment")) return;
-    setPaymentChecking(true);
-    let attempts = 0;
-    const timer = window.setInterval(() => {
-      attempts += 1;
-      void refreshProfile(true).then((paid) => {
-        if (paid || attempts >= 40) {
-          window.clearInterval(timer);
-          setPaymentChecking(false);
-          if (!paid) toast.error("Payment confirmation has not arrived yet. If you completed checkout, refresh in a moment or contact support.");
-        }
-      });
-    }, 1500);
-    return () => window.clearInterval(timer);
-  }, [refreshProfile]);
 
   async function uploadForSummary(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,10 +109,6 @@ function VerifyPage() {
       setStep("upload");
       return;
     }
-    if (profile.account_type === "landlord" && !profile.verification_fee_paid) {
-      toast.error("Pay the RentReady Verification Fee before submitting for review.");
-      return;
-    }
     setBusy(true);
     const { error } = await supabase.from("profiles").update({ verification_status: "pending" }).eq("id", user.id);
     setBusy(false);
@@ -144,7 +120,6 @@ function VerifyPage() {
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
   const label = "mb-1 block text-sm font-medium";
   const status = profile?.verification_status;
-  const isTenant = profile?.account_type === "tenant";
   const hasDraft = !!(profile?.id_number && profile.id_document_path && profile.selfie_document_path);
 
   return (
@@ -181,29 +156,17 @@ function VerifyPage() {
               <div><dt className="text-muted-foreground">{ID_NUMBER_FIELDS[profile?.id_type || ""]?.label || "ID number"}</dt><dd className="font-medium">•••••••{profile?.id_number?.slice(-4)}</dd></div>
               <div><dt className="text-muted-foreground">Uploads</dt><dd className="font-medium">ID document + selfie saved</dd></div>
             </dl>
-            {isTenant ? (
-              <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">Verification fee: Free (Tenant)</p>
-            ) : profile?.verification_fee_paid ? (
-              <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">RentReady Verification Fee: Paid</p>
-            ) : (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <h3 className="font-semibold">RentReady Verification Fee · ₦1,500</h3>
-                <p className="mt-1 text-sm text-muted-foreground">One-time fee covers manual ID + selfie review. Not monthly.</p>
-                {paymentChecking && <p className="mt-3 text-sm text-muted-foreground" role="status">Confirming your payment… Submit for review will appear after payment is confirmed.</p>}
-                <button type="button" disabled={paymentChecking} onClick={() => void startPaidPlan("nin_verification")} className="mt-4 w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-wait disabled:opacity-60">Pay RentReady Verification Fee · ₦1,500</button>
-              </div>
-            )}
+            <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">Free ID verification — no payment required. Admin approval unlocks property posting.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={() => setStep("upload")} className="w-full rounded-lg border border-border py-3 font-medium">Edit uploads</button>
-              {(isTenant || profile?.verification_fee_paid) && <button type="button" disabled={busy} onClick={() => void submitForReview()} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Submitting…" : "Submit for review"}</button>}
+              <button type="button" disabled={busy} onClick={() => void submitForReview()} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Submitting…" : "Submit for review"}</button>
             </div>
-            {!isTenant && !profile?.verification_fee_paid && <p className="text-center text-xs text-muted-foreground">Submit for review will appear here after your payment is confirmed.</p>}
           </section>
         ) : (
           <form onSubmit={uploadForSummary} className="mt-8 space-y-4 rounded-xl bg-card p-6 shadow-card">
             <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm">
-              <p className="font-semibold">{isTenant ? "Tenant verification is free" : "Upload first, pay after"}</p>
-              <p className="mt-1 text-muted-foreground">{isTenant ? "No payment is required to submit your NIN, ID and selfie." : "Landlords can upload their NIN, ID and selfie before paying the one-time RentReady Verification Fee."}</p>
+              <p className="font-semibold">Free ID verification for landlords</p>
+              <p className="mt-1 text-muted-foreground">Upload your ID and selfie, then submit for Admin review. There is no fee for basic ID verification.</p>
             </div>
             {status === "rejected" && <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm"><XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />Your previous submission was not approved. Please check your details and upload a clear, valid ID again.</div>}
             <div><label className={label}>Name on your account</label><p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">{profile?.full_name || "Name not set"}</p></div>

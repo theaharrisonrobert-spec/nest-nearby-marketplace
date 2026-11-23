@@ -327,12 +327,12 @@ function Dashboard() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           {l.sponsored && <span className="rounded bg-accent px-2 py-0.5 text-xs text-accent-foreground">Sponsored</span>}
-                          {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded bg-primary px-2 py-0.5 text-xs text-white">Featured through {new Date(l.featured_until).toLocaleDateString("en-NG")}</span>}
+                          {l.boosted_until && new Date(l.boosted_until).getTime() > Date.now() && <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Boosted through {new Date(l.boosted_until).toLocaleDateString("en-NG")}</span>}
                           <span className={`rounded px-2 py-0.5 text-xs capitalize ${STATUS_STYLE[l.status] ?? ""}`}>{l.status === "pending" ? "Waiting for Admin Approval" : l.status === "rejected" ? `Rejected${l.rejection_reason ? `: ${l.rejection_reason}` : ""}` : "Approved"}</span>
                           {l.status === "approved" && <span className={`rounded px-2 py-0.5 text-xs capitalize ${STATUS_STYLE[l.availability_status] ?? ""}`}>{l.availability_status}</span>}
                           {l.status === "approved" && l.availability_status === "available" && <button onClick={() => void setListingAvailability(l.id, "rented")} className="text-xs text-muted-foreground underline">Mark as Rented</button>}
                           {l.status === "approved" && l.availability_status !== "available" && <button onClick={() => void setListingAvailability(l.id, "available")} className="text-xs text-primary underline">Mark as Available</button>}
-                          {l.status === "approved" && (!l.featured_until || new Date(l.featured_until).getTime() <= Date.now()) && <Button size="sm" variant="outline" onClick={() => void startPaidPlan("featured_listing", l.id)}>Feature · ₦2,000 / 7 days</Button>}
+                          {l.status === "approved" && (!l.boosted_until || new Date(l.boosted_until).getTime() <= Date.now()) && <Button size="sm" variant="outline" onClick={() => void startPaidPlan("boost_post", l.id)}>Boost This Post · ₦5,000</Button>}
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeListing(l.id)}><Trash2 />Delete</Button>
                         </div>
                       </li>

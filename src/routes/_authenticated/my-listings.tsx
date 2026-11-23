@@ -1,11 +1,13 @@
 import { LISTING_COLS } from "@/lib/listings";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ListingCard } from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
+import { startPaidPlan } from "@/lib/payments";
 
 export const Route = createFileRoute("/_authenticated/my-listings")({
   head: () => ({
@@ -32,6 +34,16 @@ function MyListings() {
       return data;
     },
   });
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("payment")) return;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      void qc.invalidateQueries({ queryKey: ["my-listings", user.id] });
+      if (attempts >= 40) window.clearInterval(timer);
+    }, 1500);
+    return () => window.clearInterval(timer);
+  }, [qc, user.id]);
 
   async function remove(id: string) {
     if (!confirm("Remove this listing and its messages and viewing requests?")) return;
@@ -59,7 +71,7 @@ function MyListings() {
             {data.map((l) => (
               <div key={l.id}>
                 <ListingCard l={l} />
-                <div className="mt-2 flex items-center justify-between gap-2"><Button variant="outline" className="text-destructive" onClick={() => remove(l.id)}>Delete listing</Button><Button asChild variant="link"><Link to="/dashboard">Manage promotion</Link></Button></div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><Button variant="outline" className="text-destructive" onClick={() => remove(l.id)}>Delete listing</Button>{l.status === "approved" && <div className="flex items-center gap-2">{l.boosted_until && new Date(l.boosted_until).getTime() > Date.now() ? <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Boosted through {new Date(l.boosted_until).toLocaleDateString("en-NG")}</span> : <Button variant="outline" onClick={() => void startPaidPlan("boost_post", l.id)}>Boost This Post - ₦5,000</Button>}</div>}</div>
               </div>
             ))}
           </div>

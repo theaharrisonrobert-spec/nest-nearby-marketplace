@@ -75,8 +75,17 @@ function ListingsPage() {
       else query = query.order("created_at", { ascending: false });
       const { data, error } = await query.limit(100);
       if (error) throw error;
+      const rows = data ?? [];
+      const owners = [...new Set(rows.map((row) => row.owner_id).filter((owner): owner is string => !!owner))];
+      const { data: blueTickOwners, error: badgeError } = owners.length ? await supabase.rpc("blue_tick_owner_ids", { _owners: owners }) : { data: [], error: null };
+      if (badgeError) throw badgeError;
+      const blueTickSet = new Set((blueTickOwners ?? []).map((row) => row.owner_id));
       const now = Date.now();
-      return [...(data ?? [])].sort((a, b) => {
+      return rows.map((row) => ({ ...row, owner_blue_tick: !!row.owner_id && blueTickSet.has(row.owner_id) })).sort((a, b) => {
+        const aBoosted = !!a.boosted_until && new Date(a.boosted_until).getTime() > now;
+        const bBoosted = !!b.boosted_until && new Date(b.boosted_until).getTime() > now;
+        if (aBoosted !== bBoosted) return Number(bBoosted) - Number(aBoosted);
+        if (a.owner_blue_tick !== b.owner_blue_tick) return Number(b.owner_blue_tick) - Number(a.owner_blue_tick);
         const aFeatured = !!a.featured_until && new Date(a.featured_until).getTime() > now;
         const bFeatured = !!b.featured_until && new Date(b.featured_until).getTime() > now;
         return Number(bFeatured) - Number(aFeatured);
@@ -123,12 +132,14 @@ function ListingsFilters({ s, location }: { s: S; location: string }) {
     <button type="button" onClick={() => { setQuery(""); void navigate({ search: {} }); }} className="min-h-11 rounded-lg border border-border px-4 py-2 text-sm">Clear</button>
   </form>;
 }
-function ResultCard({ item }: { item: Listing }) {
+function ResultCard({ item }: { item: Listing & { owner_blue_tick?: boolean } }) {
   const label = item.purpose === "sale" ? "For Sale" : item.purpose === "short-let" || item.purpose === "short_let" ? "Short Let" : "For Rent";
   return <article className="overflow-hidden rounded-xl bg-card p-2 shadow-card">
     <img src={listingImage(item)} alt={item.title} loading="lazy" className="aspect-[16/10] w-full rounded-lg object-cover" />
     <div className="p-3">
       <span className="inline-flex rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">{label}</span>
+      {item.boosted_until && new Date(item.boosted_until).getTime() > Date.now() && <span className="ml-2 inline-flex rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Boosted</span>}
+      {item.owner_blue_tick && <span className="ml-2 inline-flex rounded-md bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">Blue Tick</span>}
       <h2 className="mt-3 line-clamp-2 font-semibold">{item.title}</h2>
       <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" />{item.state} · {item.city}</div>
       <p className="mt-2 text-lg font-bold text-primary">{formatNaira(item.price)} <span className="text-sm font-normal text-foreground">{PERIODS[item.price_period]}</span></p>

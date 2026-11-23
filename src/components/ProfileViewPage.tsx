@@ -50,6 +50,14 @@ export function ProfileViewPage({ user }: { user: User }) {
       return count ?? 0;
     },
   });
+  const { data: blueTickSubscription } = useQuery({
+    queryKey: ["profile-blue-tick-subscription", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("subscriptions").select("status, ends_at").eq("user_id", user.id).eq("plan", "blue_tick_monthly").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
   useEffect(() => {
     let active = true;
     if (!profile?.avatar_url) { setPhotoUrl(null); return; }
@@ -114,6 +122,7 @@ export function ProfileViewPage({ user }: { user: User }) {
         : profile?.verification_status === "unverified"
           ? "Awaiting ID Upload"
           : "Not Started";
+  const blueTickActive = profile?.blue_tick_status === "approved" && blueTickSubscription?.status === "active" && (!blueTickSubscription.ends_at || new Date(blueTickSubscription.ends_at).getTime() > Date.now());
 
   return <div className="min-h-screen bg-background text-foreground">
     <SiteHeader />
@@ -139,9 +148,10 @@ export function ProfileViewPage({ user }: { user: User }) {
             <div><dt className="text-sm text-muted-foreground">Last Name</dt><dd className="mt-1 font-semibold">{lastName || "—"}</dd></div>
             <div><dt className="text-sm text-muted-foreground">Phone</dt><dd className="mt-1 font-semibold">{profile?.phone || "—"}</dd></div>
             <div><dt className="text-sm text-muted-foreground">Email</dt><dd className="mt-1 break-all font-semibold">{user.email || "—"}</dd></div>
-            {profile?.account_type === "landlord" && <div><dt className="text-sm text-muted-foreground">Verification status</dt><dd className="mt-1 font-semibold">{verificationStatus}</dd></div>}
+            {profile?.account_type === "landlord" && <div><dt className="text-sm text-muted-foreground">Verification status</dt><dd className="mt-1 font-semibold">{verificationStatus}{blueTickActive && <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800">Blue Tick</span>}</dd>{blueTickActive && blueTickSubscription?.ends_at && <dd className="mt-1 text-xs text-muted-foreground">Blue Tick expires {new Date(blueTickSubscription.ends_at).toLocaleDateString("en-NG")}</dd>}</div>}
           </dl>
           <Button asChild className="mt-7 h-12 w-full bg-primary font-semibold text-white hover:bg-primary/90"><Link to="/settings">Edit Profile</Link></Button>
+          {profile?.account_type === "landlord" && <Button asChild variant="outline" className="mt-3 h-11 w-full"><Link to="/blue-tick">{blueTickActive ? "Manage / Renew Blue Tick" : "Get Blue Tick · ₦10,000/month"}</Link></Button>}
         </>}
       </section>
       <section className="grid gap-4 sm:grid-cols-2" aria-label="Account activity">

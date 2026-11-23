@@ -1,12 +1,10 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export type RentReadyPaidPlan = "landlord_premium" | "tenant_premium" | "featured_listing" | "nin_verification";
+export type RentReadyPaidPlan = "landlord_premium" | "tenant_premium" | "blue_tick_monthly" | "boost_post";
 
 export async function startPaidPlan(plan: RentReadyPaidPlan, listingId?: string) {
-  const unavailableMessage = plan === "nin_verification"
-    ? "Payment service is unavailable right now. Please try again later."
-    : "Payment checkout is unavailable. Please try again later.";
+  const unavailableMessage = "Payment service is unavailable right now. Please try again later.";
   try {
     const { data, error } = await supabase.functions.invoke("create-paystack-checkout", {
       body: { plan, ...(listingId ? { listing_id: listingId } : {}) },

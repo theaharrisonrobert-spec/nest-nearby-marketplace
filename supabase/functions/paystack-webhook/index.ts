@@ -155,7 +155,10 @@ async function handleWebhook(request: Request) {
   if (event.event === "subscription.create" && customerEmail && event.data?.subscription_code && event.data.email_token && event.data.plan?.plan_code) {
     const landlordCode = Deno.env.get("PAYSTACK_LANDLORD_MONTHLY_PLAN_CODE");
     const tenantCode = Deno.env.get("PAYSTACK_TENANT_MONTHLY_PLAN_CODE");
-    const plan = event.data.plan.plan_code === landlordCode ? "landlord_premium" : event.data.plan.plan_code === tenantCode ? "tenant_premium" : null;
+    const blueTickCode = Deno.env.get("PAYSTACK_BLUE_TICK_MONTHLY_PLAN_CODE");
+    const plan = event.data.plan.plan_code === landlordCode ? "landlord_premium"
+      : event.data.plan.plan_code === tenantCode ? "tenant_premium"
+        : event.data.plan.plan_code === blueTickCode ? "blue_tick_monthly" : null;
     if (plan) {
       const { data: subscription } = await admin.from("subscriptions").select("id").eq("billing_email", customerEmail)
         .eq("plan", plan).in("status", ["pending", "active"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
@@ -169,8 +172,10 @@ async function handleWebhook(request: Request) {
   if (!payment && customerEmail && event.data.plan?.plan_code) {
     const landlordPlanCode = Deno.env.get("PAYSTACK_LANDLORD_MONTHLY_PLAN_CODE");
     const tenantPlanCode = Deno.env.get("PAYSTACK_TENANT_MONTHLY_PLAN_CODE");
+    const blueTickPlanCode = Deno.env.get("PAYSTACK_BLUE_TICK_MONTHLY_PLAN_CODE");
     const recurringPlan = event.data.plan.plan_code === landlordPlanCode ? "landlord_premium"
-      : event.data.plan.plan_code === tenantPlanCode ? "tenant_premium" : null;
+      : event.data.plan.plan_code === tenantPlanCode ? "tenant_premium"
+        : event.data.plan.plan_code === blueTickPlanCode ? "blue_tick_monthly" : null;
     if (recurringPlan) {
       const result = await admin.from("subscriptions").select("*").eq("billing_email", customerEmail)
         .eq("plan", recurringPlan).eq("status", "active").order("created_at", { ascending: false }).limit(1).maybeSingle();

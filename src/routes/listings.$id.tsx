@@ -162,6 +162,7 @@ function Detail() {
                   <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">{l.purpose === "sale" ? "For Sale" : "For Rent"}</span>
                   {l.sponsored && <span className="rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">Sponsored</span>}
                   {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-white">Featured</span>}
+                  {l.boosted_until && new Date(l.boosted_until).getTime() > Date.now() && <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Boosted</span>}
                   <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">No Agent Fee</span>
                   <span className="text-xs leading-6 text-muted-foreground">{l.category}</span>
                 </div>
@@ -207,7 +208,7 @@ function Detail() {
               <div className={card}>
                 <div className="text-sm text-muted-foreground">Listed by</div>
                 <div className="text-lg font-semibold">{l.contact_name || "Property owner"}</div>
-                <TrustBadges identity={!!badges?.identity_verified} agency={!!badges?.agency_verified} reviewed={l.details_reviewed} accountType={badges?.account_type} />
+                <TrustBadges identity={!!badges?.identity_verified} agency={!!badges?.agency_verified} reviewed={l.details_reviewed} accountType={badges?.account_type} blueTick={!!badges?.blue_tick_verified} />
                 {premiumLandlord && <span className="mt-2 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Verified Premium Landlord</span>}
               </div>
 

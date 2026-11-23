@@ -53,6 +53,7 @@ export type Database = {
           description: string | null
           details_reviewed: boolean
           featured_until: string | null
+          boosted_until: string | null
           early_access_until: string | null
           id: string
           image_url: string | null
@@ -86,6 +87,7 @@ export type Database = {
           description?: string | null
           details_reviewed?: boolean
           featured_until?: string | null
+          boosted_until?: string | null
           early_access_until?: string | null
           id?: string
           image_url?: string | null
@@ -119,6 +121,7 @@ export type Database = {
           description?: string | null
           details_reviewed?: boolean
           featured_until?: string | null
+          boosted_until?: string | null
           early_access_until?: string | null
           id?: string
           image_url?: string | null
@@ -185,6 +188,10 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           avatar_url: string | null
+          blue_tick_status: string
+          blue_tick_id_document_path: string | null
+          blue_tick_selfie_path: string | null
+          blue_tick_submitted_at: string | null
           agency_name: string | null
           agency_verified: boolean
           created_at: string
@@ -214,6 +221,10 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           avatar_url?: string | null
+          blue_tick_status?: string
+          blue_tick_id_document_path?: string | null
+          blue_tick_selfie_path?: string | null
+          blue_tick_submitted_at?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -243,6 +254,10 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           avatar_url?: string | null
+          blue_tick_status?: string
+          blue_tick_id_document_path?: string | null
+          blue_tick_selfie_path?: string | null
+          blue_tick_submitted_at?: string | null
           agency_name?: string | null
           agency_verified?: boolean
           created_at?: string
@@ -573,9 +588,11 @@ export type Database = {
           account_type: string
           agency_name: string
           agency_verified: boolean
+          blue_tick_verified: boolean
           identity_verified: boolean
         }[]
       }
+      blue_tick_owner_ids: { Args: { _owners: string[] }; Returns: { owner_id: string }[] }
       record_sign_in: { Args: { _method?: string }; Returns: undefined }
       respond_to_viewing: { Args: { _viewing_id: string; _accept: boolean }; Returns: undefined }
       start_viewing: { Args: { _viewing_id: string }; Returns: undefined }

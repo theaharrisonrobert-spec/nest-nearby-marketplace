@@ -8,8 +8,8 @@ const corsHeaders = {
 const prices = {
   landlord_premium: 5000,
   tenant_premium: 2000,
-  featured_listing: 2000,
-  nin_verification: 1500,
+  blue_tick_monthly: 10000,
+  boost_post: 5000,
 } as const;
 type Plan = keyof typeof prices;
 
@@ -35,23 +35,29 @@ Deno.serve(async (request) => {
   if (!body.plan || !(body.plan in prices)) return json({ error: "Choose a valid RentReady plan" }, 400);
   const plan = body.plan;
   const service = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  const { data: profile, error: profileError } = await service.from("profiles").select("account_type, verification_fee_paid, approval_status, is_blocked, id_number, id_document_path, selfie_document_path").eq("id", authData.user.id).maybeSingle();
+  const { data: profile, error: profileError } = await service.from("profiles").select("account_type, verification_status, verification_name_matched, approval_status, is_blocked, blue_tick_status").eq("id", authData.user.id).maybeSingle();
   if (profileError || !profile) return json({ error: "Could not load your RentReady profile" }, 400);
-  if (profile.is_blocked || (plan !== "nin_verification" && profile.approval_status !== "approved")) return json({ error: "Your account must be approved before making this payment" }, 403);
+  if (profile.is_blocked || profile.approval_status !== "approved") return json({ error: "Your account must be approved before making this payment" }, 403);
   if (plan === "landlord_premium" && profile.account_type !== "landlord") return json({ error: "Landlord Premium is for landlord accounts" }, 403);
   if (plan === "tenant_premium" && profile.account_type !== "tenant") return json({ error: "Tenant Premium is for tenant accounts" }, 403);
-  if (plan === "nin_verification" && (profile.account_type !== "landlord" || profile.verification_fee_paid)) return json({ error: "The RentReady Verification Fee is available to landlords once" }, 400);
-  if (plan === "nin_verification" && (!profile.id_number || !profile.id_document_path || !profile.selfie_document_path)) return json({ error: "Upload your NIN, ID and selfie before paying the RentReady Verification Fee" }, 400);
+  if (plan === "blue_tick_monthly" && (profile.account_type !== "landlord" || profile.verification_status !== "approved" || !profile.verification_name_matched)) return json({ error: "Complete free ID verification before applying for Blue Tick" }, 403);
+  if (plan === "blue_tick_monthly" && profile.blue_tick_status === "approved") {
+    const { data: activeBlueTick } = await service.from("subscriptions").select("id").eq("user_id", authData.user.id)
+      .eq("plan", "blue_tick_monthly").eq("status", "active").gt("ends_at", new Date().toISOString()).limit(1).maybeSingle();
+    if (activeBlueTick) return json({ error: "Blue Tick is already active on this account" }, 409);
+  }
 
-  if (plan === "featured_listing") {
+  if (plan === "boost_post") {
     if (!body.listing_id) return json({ error: "Choose the property to feature" }, 400);
-    const { data: listing } = await service.from("listings").select("id, status, owner_id").eq("id", body.listing_id).maybeSingle();
-    if (!listing || listing.owner_id !== authData.user.id || listing.status !== "approved") return json({ error: "Only your approved properties can be featured" }, 403);
+    const { data: listing } = await service.from("listings").select("id, status, owner_id, boosted_until").eq("id", body.listing_id).maybeSingle();
+    if (!listing || listing.owner_id !== authData.user.id || listing.status !== "approved") return json({ error: "Only your approved properties can be boosted" }, 403);
+    if (listing.boosted_until && new Date(listing.boosted_until).getTime() > Date.now()) return json({ error: "This post is already boosted" }, 409);
   }
 
   const planCode = plan === "landlord_premium" ? Deno.env.get("PAYSTACK_LANDLORD_MONTHLY_PLAN_CODE")
-    : plan === "tenant_premium" ? Deno.env.get("PAYSTACK_TENANT_MONTHLY_PLAN_CODE") : undefined;
-  if ((plan === "landlord_premium" || plan === "tenant_premium") && !planCode) {
+    : plan === "tenant_premium" ? Deno.env.get("PAYSTACK_TENANT_MONTHLY_PLAN_CODE")
+      : plan === "blue_tick_monthly" ? Deno.env.get("PAYSTACK_BLUE_TICK_MONTHLY_PLAN_CODE") : undefined;
+  if ((plan === "landlord_premium" || plan === "tenant_premium" || plan === "blue_tick_monthly") && !planCode) {
     return json({ error: "Monthly Paystack plan is not configured. Ask the RentReady administrator to finish payment setup." }, 503);
   }
 
@@ -66,12 +72,13 @@ Deno.serve(async (request) => {
     provider: "paystack",
     provider_reference: reference,
     billing_email: authData.user.email!,
-    listing_id: plan === "featured_listing" ? body.listing_id! : null,
+    listing_id: plan === "boost_post" ? body.listing_id! : null,
     status: "pending",
   });
   if (insertError) return json({ error: "Could not start payment. Please try again." }, 500);
 
-  const callback = `${appUrl.replace(/\/$/, "")}${plan === "nin_verification" ? "/verify?payment=complete" : "/dashboard?payment=complete"}`;
+  const callbackPath = plan === "blue_tick_monthly" ? "/blue-tick?payment=complete" : plan === "boost_post" ? "/my-listings?payment=complete" : "/dashboard?payment=complete";
+  const callback = `${appUrl.replace(/\/$/, "")}${callbackPath}`;
   const paystackBody: Record<string, unknown> = {
     email: authData.user.email,
     amount: amount * 100,

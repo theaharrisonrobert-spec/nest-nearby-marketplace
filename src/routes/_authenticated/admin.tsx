@@ -39,28 +39,39 @@ function AdminPage() {
   const { user } = Route.useRouteContext();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [pending, setPending] = useState<PendingUser[]>([]);
+  const [pendingBlueTick, setPendingBlueTick] = useState<PendingUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [reviewFlags, setReviewFlags] = useState<ReviewFlag[]>([]);
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedVerification, setSelectedVerification] = useState<PendingUser | null>(null);
+  const [selectedBlueTick, setSelectedBlueTick] = useState<PendingUser | null>(null);
 
   const load = useCallback(async () => {
     const { data: role } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
     setIsAdmin(!!role);
     if (!role) return;
-    const [{ data: p, error: pError }, { data: directory, error: directoryError }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
+    const [{ data: p, error: pError }, { data: blueTick, error: blueTickError }, { data: directory, error: directoryError }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_number, id_document_path, selfie_document_path, verification_status, verification_fee_paid, created_at")
         .in("account_type", ["tenant", "landlord"]).neq("verification_status", "approved").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name, phone, account_type, id_type, id_number, blue_tick_id_document_path, blue_tick_selfie_path, blue_tick_status, created_at")
+        .eq("blue_tick_status", "pending").order("blue_tick_submitted_at", { ascending: false }),
       supabase.rpc("admin_user_directory", { _search: null }),
       supabase.from("admin_notifications").select("id, kind, message, created_at").order("created_at", { ascending: false }).limit(50),
       supabase.from("profiles").select("id, full_name, phone").eq("account_review_required", true),
       supabase.rpc("admin_site_visit_count"),
     ]);
     if (pError) toast.error("Could not load the identity review queue");
+    if (blueTickError) toast.error("Could not load the Blue Tick review queue");
     if (directoryError) toast.error("Could not load applicant email addresses");
     const emailById = new Map((directory ?? []).map((person) => [person.id, person.email]));
     setPending((p ?? []).map((person) => ({ ...person, email: emailById.get(person.id) ?? "Email unavailable" })));
+    setPendingBlueTick((blueTick ?? []).map((person) => ({
+      id: person.id, full_name: person.full_name, phone: person.phone, account_type: person.account_type,
+      created_at: person.created_at, id_type: person.id_type, id_number: person.id_number,
+      id_document_path: person.blue_tick_id_document_path, selfie_document_path: person.blue_tick_selfie_path,
+      verification_status: person.blue_tick_status, email: emailById.get(person.id) ?? "Email unavailable",
+    })));
     setNotifications(n ?? []);
     setReviewFlags(r ?? []);
     setVisitorCount(visits ?? 0);
@@ -85,6 +96,22 @@ function AdminPage() {
     toast.success(approved ? "User approved — they can now post" : "Submission rejected");
     setPending((list) => list.filter((p) => p.id !== id));
     setSelectedVerification(null);
+    return true;
+  }
+
+  async function decideBlueTick(id: string, approved: boolean): Promise<boolean> {
+    const applicant = pendingBlueTick.find((profile) => profile.id === id);
+    if (!applicant?.id_document_path || !applicant.selfie_document_path) {
+      toast.error("Awaiting the re-uploaded ID and live selfie before a Blue Tick decision.");
+      return false;
+    }
+    setBusyId(id);
+    const { error } = await supabase.from("profiles").update({ blue_tick_status: approved ? "approved" : "rejected" }).eq("id", id);
+    setBusyId(null);
+    if (error) { toast.error(error.message); return false; }
+    toast.success(approved ? "Blue Tick approved" : "Blue Tick application rejected");
+    setPendingBlueTick((list) => list.filter((person) => person.id !== id));
+    setSelectedBlueTick(null);
     return true;
   }
 
@@ -120,7 +147,7 @@ function AdminPage() {
         <AdminPhaseOne />
 
         <h2 className="mt-10 text-xl font-bold">Identity verification review queue ({pending.length})</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Open an applicant to view their ID and selfie before deciding. Tenants verify free; landlords pay the one-time fee after uploading.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Open an applicant to view their ID and selfie before deciding. Basic ID verification is free; verified landlords need approval before posting.</p>
         {pending.length === 0 ? (
           <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No identity reviews are waiting.</p>
         ) : (
@@ -134,7 +161,7 @@ function AdminPage() {
                 </span>
                 <span className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary"}`}>{p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}</span>
-                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">{p.account_type === "tenant" ? "Free (Tenant)" : p.verification_fee_paid ? "Paid" : "Not Paid"}</span>
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">Free ID review</span>
                 </span>
               </button>
             ))}
@@ -148,6 +175,19 @@ function AdminPage() {
           busy={selectedVerification ? busyId === selectedVerification.id : false}
           onApprove={() => { if (selectedVerification) void decide(selectedVerification.id, true); }}
           onReject={() => { if (selectedVerification) void decide(selectedVerification.id, false); }}
+        />
+
+        <h2 className="mt-10 text-xl font-bold">Blue Tick face match queue ({pendingBlueTick.length})</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Compare the applicant’s live selfie with their re-uploaded ID photo. This is a manual review.</p>
+        {pendingBlueTick.length === 0 ? <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No Blue Tick applications are waiting.</p> : <div className="mt-3 space-y-3">{pendingBlueTick.map((person) => <button key={person.id} type="button" onClick={() => setSelectedBlueTick(person)} className="flex w-full flex-wrap items-center justify-between gap-4 rounded-xl bg-card p-5 text-left shadow-card transition hover:ring-2 hover:ring-primary/40"><span><span className="block font-semibold">{person.full_name ?? "Unnamed user"}</span><span className="mt-1 block text-sm text-muted-foreground">{person.email} · {person.phone ?? "No phone"}</span><span className="mt-1 block text-xs text-muted-foreground">ID type: {person.id_type ?? "Not provided"}</span></span><span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Face match review</span></button>)}</div>}
+        <AdminIdentityReviewDialog
+          open={!!selectedBlueTick}
+          onOpenChange={(open) => { if (!open) setSelectedBlueTick(null); }}
+          person={selectedBlueTick}
+          mode="blue_tick"
+          busy={selectedBlueTick ? busyId === selectedBlueTick.id : false}
+          onApprove={() => { if (selectedBlueTick) void decideBlueTick(selectedBlueTick.id, true); }}
+          onReject={() => { if (selectedBlueTick) void decideBlueTick(selectedBlueTick.id, false); }}
         />
 
         <h2 className="mt-10 text-xl font-bold">Landlord accounts under review ({reviewFlags.length})</h2>

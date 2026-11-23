@@ -28,6 +28,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedBlueTickRouteImport } from './routes/_authenticated/blue-tick'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedMyListingsRouteImport } from './routes/_authenticated/my-listings'
@@ -133,6 +134,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBlueTickRoute = AuthenticatedBlueTickRouteImport.update({
+  id: '/blue-tick',
+  path: '/blue-tick',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/blue-tick': typeof AuthenticatedBlueTickRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/my-listings': typeof AuthenticatedMyListingsRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/blue-tick': typeof AuthenticatedBlueTickRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/my-listings': typeof AuthenticatedMyListingsRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/blue-tick': typeof AuthenticatedBlueTickRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/my-listings': typeof AuthenticatedMyListingsRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/test'
     | '/admin'
+    | '/blue-tick'
     | '/dashboard'
     | '/messages'
     | '/my-listings'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/test'
     | '/admin'
+    | '/blue-tick'
     | '/dashboard'
     | '/messages'
     | '/my-listings'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/test'
     | '/_authenticated/admin'
+    | '/_authenticated/blue-tick'
     | '/_authenticated/dashboard'
     | '/_authenticated/messages'
     | '/_authenticated/my-listings'
@@ -531,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/blue-tick': {
+      id: '/_authenticated/blue-tick'
+      path: '/blue-tick'
+      fullPath: '/blue-tick'
+      preLoaderRoute: typeof AuthenticatedBlueTickRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -606,6 +625,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedBlueTickRoute: typeof AuthenticatedBlueTickRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedMyListingsRoute: typeof AuthenticatedMyListingsRoute
@@ -616,6 +636,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedBlueTickRoute: AuthenticatedBlueTickRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedMyListingsRoute: AuthenticatedMyListingsRoute,
