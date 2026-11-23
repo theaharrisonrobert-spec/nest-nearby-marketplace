@@ -133,7 +133,7 @@ function AdminPage() {
                   <span className="mt-1 block text-xs text-muted-foreground">Joined {new Date(p.created_at).toLocaleDateString("en-NG")}{p.id_type ? ` · ${p.id_type}` : ""}</span>
                 </span>
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700"}`}>{p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}</span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary"}`}>{p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}</span>
                   <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">{p.account_type === "tenant" ? "Free (Tenant)" : p.verification_fee_paid ? "Paid" : "Not Paid"}</span>
                 </span>
               </button>

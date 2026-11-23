@@ -40,17 +40,17 @@ function ResetPasswordPage() {
     }
   }
 
-  const input = "h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20";
+  const input = "h-12 w-full rounded-lg border border-border bg-white px-4 text-base text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
   return (
     <AuthScene>
-      <h1 className="text-3xl font-bold text-slate-900">Choose a new password</h1>
-      <p className="mt-2 text-sm text-slate-600">Enter a new password to get back into your account.</p>
+      <h1 className="text-3xl font-bold text-foreground">Choose a new password</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Enter a new password to get back into your account.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <label className="block text-sm font-semibold text-slate-800" htmlFor="new-password">New password<input id="new-password" name="password" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
-        <label className="block text-sm font-semibold text-slate-800" htmlFor="confirm-password">Confirm new password<input id="confirm-password" name="confirm" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
-        <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-[#2563EB] font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-60">{busy ? "Updating…" : "Update password"}</button>
+        <label className="block text-sm font-semibold text-foreground" htmlFor="new-password">New password<input id="new-password" name="password" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
+        <label className="block text-sm font-semibold text-foreground" htmlFor="confirm-password">Confirm new password<input id="confirm-password" name="confirm" type="password" autoComplete="new-password" required minLength={8} className={`${input} mt-1.5 font-normal`} /></label>
+        <button type="submit" disabled={busy} className="h-12 w-full rounded-lg bg-primary font-semibold text-white hover:bg-primary/90 disabled:opacity-60">{busy ? "Updating…" : "Update password"}</button>
       </form>
-      <p className="mt-5 text-sm text-slate-600"><Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-[#2563EB] hover:underline">Back to sign in</Link></p>
+      <p className="mt-5 text-sm text-muted-foreground"><Link to="/auth" search={{ mode: "signin" }} className="font-semibold text-primary hover:underline">Back to sign in</Link></p>
     </AuthScene>
   );
 }

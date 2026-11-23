@@ -72,7 +72,7 @@ function AuthPage() {
   const [googleRoleType, setGoogleRoleType] = useState<AccountType | null>(null);
   const [signupAddressMayExist, setSignupAddressMayExist] = useState(false);
   const signup = mode === "signup";
-  const field = "h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20";
+  const field = "h-12 w-full rounded-lg border border-border bg-white px-4 text-base text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
   const signInSearch = next ? { mode: "signin" as const, next } : { mode: "signin" as const };
 
   useEffect(() => {
@@ -249,34 +249,34 @@ function AuthPage() {
       <label htmlFor="auth-password" className="mb-1.5 block text-sm font-semibold">{label}</label>
       <div className="relative">
         <input id="auth-password" name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={autocomplete} type={showPassword ? "text" : "password"} required minLength={short ? 1 : 8} pattern={short ? undefined : "(?=.*[A-Za-z])(?=.*[0-9]).{8,}"} title={short ? undefined : "Use at least 8 characters with letters and numbers"} placeholder={short ? "Password" : "Create a password"} className={field + " pr-12"} />
-        <button type="button" className="absolute right-3 top-3 text-sm font-medium text-slate-600" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+        <button type="button" className="absolute right-3 top-3 text-sm font-medium text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
       </div>
-      {!short && <p className="mt-1.5 text-xs text-slate-500">At least 8 characters, with letters and numbers.</p>}
+      {!short && <p className="mt-1.5 text-xs text-muted-foreground">At least 8 characters, with letters and numbers.</p>}
     </div>
   );
-  const googleButton = <Button onClick={google} type="button" variant="outline" disabled={busy} className="h-12 w-full border-slate-300 bg-white text-base font-semibold text-slate-800 hover:bg-slate-50"><span className="font-display text-lg font-bold text-[#2563EB]" aria-hidden="true">G</span>Continue with Google</Button>;
-  const primaryButton = "h-12 w-full bg-[#2563EB] text-base font-semibold text-white hover:bg-[#1D4ED8]";
-  const linkClass = "font-semibold text-[#2563EB] underline-offset-2 hover:underline";
+  const googleButton = <Button onClick={google} type="button" variant="outline" disabled={busy} className="h-12 w-full border-border bg-white text-base font-semibold text-foreground hover:bg-muted"><span className="font-display text-lg font-bold text-primary" aria-hidden="true">G</span>Continue with Google</Button>;
+  const primaryButton = "h-12 w-full bg-primary text-base font-semibold text-white hover:bg-primary/90";
+  const linkClass = "font-semibold text-primary underline-offset-2 hover:underline";
 
   return <AuthScene>
     {step === "googleRole" ? (
       <form onSubmit={completeGoogleRole} className="space-y-4">
         <h1 className="text-3xl font-bold">Create account</h1>
-        <p className="text-sm text-slate-600">Choose how you’ll use RentReady.</p>
-        <div className="grid grid-cols-2 gap-3">{(["landlord", "tenant"] as const).map((role) => <button key={role} type="button" aria-pressed={googleRoleType === role} onClick={() => setGoogleRoleType(role)} className={`min-h-12 rounded-lg border px-3 text-sm font-semibold ${googleRoleType === role ? "border-[#0B3D2E] bg-[#0B3D2E] text-white" : "border-slate-300 bg-white text-slate-800"}`}>{role === "landlord" ? "Landlord / Property Owner" : "Buyer / Tenant"}</button>)}</div>
+        <p className="text-sm text-muted-foreground">Choose how you’ll use RentReady.</p>
+        <div className="grid grid-cols-2 gap-3">{(["landlord", "tenant"] as const).map((role) => <button key={role} type="button" aria-pressed={googleRoleType === role} onClick={() => setGoogleRoleType(role)} className={`min-h-12 rounded-lg border px-3 text-sm font-semibold ${googleRoleType === role ? "border-primary bg-primary text-white" : "border-border bg-white text-foreground"}`}>{role === "landlord" ? "Landlord / Property Owner" : "Buyer / Tenant"}</button>)}</div>
         <label className="block text-sm font-semibold" htmlFor="google-phone">Phone number *<input id="google-phone" value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" inputMode="tel" autoComplete="tel" required placeholder="0803..." className={`${field} mt-1.5 font-normal`} /></label>
         <Button type="submit" disabled={busy} className={primaryButton}>{busy ? "Saving…" : "Continue"}</Button>
       </form>
     ) : step === "professional" ? (
       <div>
         <h1 className="text-3xl font-bold">Create professional account</h1>
-        <p className="mt-2 text-sm text-slate-600">Create a RentReady account for your property business.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Create a RentReady account for your property business.</p>
         <form onSubmit={createAccount} className="mt-6 space-y-4">
           <label className="block text-sm font-semibold" htmlFor="professional-email">Email Address *<input id="professional-email" name="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" type="email" required placeholder="Email address" className={`${field} mt-1.5 font-normal`} /></label>
           <label className="block text-sm font-semibold" htmlFor="professional-password">Create password *
-            <div className="relative mt-1.5"><input id="professional-password" name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" type={showPassword ? "text" : "password"} required minLength={8} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\\s]).{8,}" title="Use at least 8 characters with uppercase and lowercase letters, a number, and a special character" placeholder="Create a password" className={`${field} pr-12 font-normal`} /><button type="button" className="absolute right-3 top-3 text-sm font-medium text-slate-600" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div>
+            <div className="relative mt-1.5"><input id="professional-password" name="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" type={showPassword ? "text" : "password"} required minLength={8} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\\s]).{8,}" title="Use at least 8 characters with uppercase and lowercase letters, a number, and a special character" placeholder="Create a password" className={`${field} pr-12 font-normal`} /><button type="button" className="absolute right-3 top-3 text-sm font-medium text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div>
           </label>
-          <p className="-mt-2 text-xs text-slate-500">At least 8 characters, uppercase and lowercase letters, a number, and a special character.</p>
+          <p className="-mt-2 text-xs text-muted-foreground">At least 8 characters, uppercase and lowercase letters, a number, and a special character.</p>
           <label className="block text-sm font-semibold" htmlFor="professional-type">Professional type *<select id="professional-type" required value={professionalType} onChange={(event) => setProfessionalType(event.target.value as ProfessionalType | "")} className={`${field} mt-1.5 font-normal`}><option value="" disabled>Select your category</option><option value="property_owner">Landlord / Property Owner</option><option value="agent_realtor">Agent / Realtor</option><option value="property_manager">Property Manager</option><option value="caretaker">Caretaker</option></select></label>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block text-sm font-semibold" htmlFor="professional-first-name">First name *<input id="professional-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" required placeholder="First name" className={`${field} mt-1.5 font-normal`} /></label>
@@ -293,16 +293,16 @@ function AuthPage() {
     ) : step === "sent" ? (
       <div>
         <h1 className="text-3xl font-bold">Check your email</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{signupAddressMayExist
-          ? <>If <span className="font-semibold text-slate-900">{email.trim()}</span> is still awaiting confirmation, use the button below to request a new link. If you already have an account, sign in or reset your password.</>
-          : <>Supabase accepted the signup for <span className="font-semibold text-slate-900">{email.trim()}</span>. A confirmation link should arrive by email. Check your spam folder if you don’t see it.</>}</p>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => void resendConfirmation()} className="mt-5 h-12 w-full border-slate-300 text-slate-800">{busy ? "Sending…" : "Resend confirmation link"}</Button>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">{signupAddressMayExist
+          ? <>If <span className="font-semibold text-foreground">{email.trim()}</span> is still awaiting confirmation, use the button below to request a new link. If you already have an account, sign in or reset your password.</>
+          : <>Supabase accepted the signup for <span className="font-semibold text-foreground">{email.trim()}</span>. A confirmation link should arrive by email. Check your spam folder if you don’t see it.</>}</p>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void resendConfirmation()} className="mt-5 h-12 w-full border-border text-foreground">{busy ? "Sending…" : "Resend confirmation link"}</Button>
         <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Use a different email</button>
       </div>
     ) : step === "password" ? (
       <div>
         <h1 className="text-3xl font-bold">Sign in</h1>
-        <p className="mt-2 text-sm text-slate-600">Continue with {email.trim()}</p>
+        <p className="mt-2 text-sm text-muted-foreground">Continue with {email.trim()}</p>
         <form onSubmit={onLogin} className="mt-6 space-y-4">
           {passwordField("Password *", "current-password", true)}
           <div className="text-right"><Link to="/forgot-password" className={`text-sm ${linkClass}`}>Forgot password?</Link></div>
@@ -313,7 +313,7 @@ function AuthPage() {
     ) : step === "signup" ? (
       <div>
         <h1 className="text-3xl font-bold">Create account</h1>
-        <p className="mt-2 text-sm text-slate-600">{email.trim() ? `Finish setting up ${email.trim()}.` : "Enter your details to create a Buyer / Tenant account."}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{email.trim() ? `Finish setting up ${email.trim()}.` : "Enter your details to create a Buyer / Tenant account."}</p>
         <form onSubmit={createAccount} className="mt-6 space-y-4">
           {!email.trim() && <label className="block text-sm font-semibold" htmlFor="buyer-email">Email Address *<input id="buyer-email" name="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" type="email" required placeholder="Email address" className={`${field} mt-1.5 font-normal`} /></label>}
           {passwordField("Create password *", "new-password")}
@@ -322,21 +322,21 @@ function AuthPage() {
           <Button type="submit" disabled={busy} className={primaryButton}>{busy ? "Creating account…" : "Create Account"}</Button>
         </form>
         <button type="button" onClick={resetToEmailStep} className={`mt-5 inline-flex items-center gap-2 text-sm ${linkClass}`}><ArrowLeft className="h-4 w-4" />Change email</button>
-        <p className="mt-5 text-sm text-slate-600">Have a RentReady account? <button type="button" onClick={() => void navigate({ to: "/auth", search: { mode: "signin", ...(next ? { next } : {}) }, replace: true })} className={linkClass}>Sign in</button></p>
+        <p className="mt-5 text-sm text-muted-foreground">Have a RentReady account? <button type="button" onClick={() => void navigate({ to: "/auth", search: { mode: "signin", ...(next ? { next } : {}) }, replace: true })} className={linkClass}>Sign in</button></p>
       </div>
     ) : (
       <div>
         <h1 className="text-3xl font-bold">{signup ? "Create account" : "Sign in"}</h1>
-        <p className="mt-2 text-sm text-slate-600">{signup ? "Start with your email to create a Buyer / Tenant account." : "Enter your email to continue."}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{signup ? "Start with your email to create a Buyer / Tenant account." : "Enter your email to continue."}</p>
         <form onSubmit={continueWithEmail} className="mt-6 space-y-4">
           <label className="block text-sm font-semibold" htmlFor="auth-email">Email Address *<input id="auth-email" name="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" type="email" required placeholder="Email address" className={`${field} mt-1.5 font-normal`} /></label>
           <Button type="submit" className={primaryButton}>Continue</Button>
         </form>
-        <p className="mt-5 text-sm text-slate-600">{signup ? "Have a RentReady account?" : "New to RentReady?"} <button type="button" onClick={() => void navigate({ to: "/auth", search: { mode: signup ? "signin" : "signup", ...(next ? { next } : {}) }, replace: true })} className={linkClass}>{signup ? "Sign in" : "Create account"}</button></p>
+        <p className="mt-5 text-sm text-muted-foreground">{signup ? "Have a RentReady account?" : "New to RentReady?"} <button type="button" onClick={() => void navigate({ to: "/auth", search: { mode: signup ? "signin" : "signup", ...(next ? { next } : {}) }, replace: true })} className={linkClass}>{signup ? "Sign in" : "Create account"}</button></p>
         {signup && <div className="mt-4 flex items-center justify-between gap-3 text-sm"><button type="button" onClick={() => { setAccountRole("tenant"); setStep("signup"); }} className={linkClass}>Buyer / Tenant</button><button type="button" onClick={chooseLandlord} className={linkClass}>I am a landlord / professional</button></div>}
-        <div className="my-6 flex items-center gap-3 text-xs font-medium text-slate-500"><span className="h-px flex-1 bg-slate-200" />OR<span className="h-px flex-1 bg-slate-200" /></div>
+        <div className="my-6 flex items-center gap-3 text-xs font-medium text-muted-foreground"><span className="h-px flex-1 bg-muted-foreground/20" />OR<span className="h-px flex-1 bg-muted-foreground/20" /></div>
         {googleButton}
-        {signup && <p className="mt-5 text-center text-xs leading-5 text-slate-500">By submitting, I accept RentReady&apos;s <Link to="/terms" className={linkClass}>terms of use</Link>.</p>}
+        {signup && <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">By submitting, I accept RentReady&apos;s <Link to="/terms" className={linkClass}>terms of use</Link>.</p>}
       </div>
     )}
   </AuthScene>;

@@ -177,7 +177,7 @@ export function AdminPhaseOne() {
         const idStatus = verificationMetaQuery.isLoading ? "Checking ID status…" : verificationMetaQuery.isError ? "ID status unavailable" : meta?.id_document_path ? "ID Uploaded" : "No ID Uploaded";
         return <button key={person.id} type="button" onClick={() => openPerson(person)} disabled={verificationMetaQuery.isLoading || verificationMetaQuery.isError} className={`${card} flex w-full flex-wrap items-center justify-between gap-4 text-left transition hover:ring-2 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-70`} aria-label={`Open review details for ${person.full_name || person.email}`}>
           <span><span className="block font-semibold">{person.full_name || "Unnamed user"}</span><span className="mt-1 block text-sm text-muted-foreground">{person.email} · {person.phone || "No phone"}</span><span className="mt-1 block text-xs capitalize text-muted-foreground">{person.account_type} · Joined {new Date(person.created_at).toLocaleDateString("en-NG")}</span></span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta?.id_document_path ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700"}`}>{idStatus}</span>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta?.id_document_path ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary"}`}>{idStatus}</span>
         </button>;
       })}
       <AdminIdentityReviewDialog

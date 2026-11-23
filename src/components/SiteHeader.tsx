@@ -9,7 +9,7 @@ import { CATEGORIES } from "@/lib/listings";
 
 export function Logo({ light = false, homeMark = false }: { light?: boolean; homeMark?: boolean }) {
   return homeMark
-    ? <Link to="/" className="flex shrink-0 items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0B3D2E] text-white"><HomeIcon className="h-6 w-6" strokeWidth={2.5} /></span><span className="font-display text-2xl font-bold text-[#0B3D2E]">RentReady</span></Link>
+    ? <Link to="/" className="flex shrink-0 items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"><HomeIcon className="h-6 w-6" strokeWidth={2.5} /></span><span className="font-display text-2xl font-bold text-primary">RentReady</span></Link>
     : <Link to="/" className="flex items-center gap-2"><HomeIcon className="h-7 w-7 text-primary" strokeWidth={2.5} /><span className={"font-display text-2xl font-bold " + (light ? "text-ink-foreground" : "text-foreground")}>Rent<span className="text-primary">Ready</span></span></Link>;
 }
 
@@ -55,16 +55,16 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         <Button variant="ghost" size="icon" className={home ? "lg:hidden" : "justify-self-start"} aria-label="Open menu" onClick={() => { setOpen(true); setAccount(false); }}><Menu /></Button>
         <Logo light={overlay && !home} homeMark={home} />
         {home && <nav className="hidden items-center gap-5 lg:flex" aria-label="Main navigation">
-          <Link to="/" className="text-sm font-medium hover:text-[#0B3D2E]">Home</Link>
-          <Link to="/listings" search={{ purpose: "sale" }} className="text-sm font-medium hover:text-[#0B3D2E]">Buy</Link>
-          <Link to="/listings" search={{ purpose: "rent" }} className="text-sm font-medium hover:text-[#0B3D2E]">Rent</Link>
-          <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-[#0B3D2E]">Short Let</Link>
-          <Link to="/landlords" className="text-sm font-medium hover:text-[#0B3D2E]">Agents</Link>
+          <Link to="/" className="text-sm font-medium hover:text-primary">Home</Link>
+          <Link to="/listings" search={{ purpose: "sale" }} className="text-sm font-medium hover:text-primary">Buy</Link>
+          <Link to="/listings" search={{ purpose: "rent" }} className="text-sm font-medium hover:text-primary">Rent</Link>
+          <Link to="/listings" search={{ purpose: "short-let" }} className="text-sm font-medium hover:text-primary">Short Let</Link>
+          <Link to="/landlords" className="text-sm font-medium hover:text-primary">Agents</Link>
         </nav>}
         <div className={home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end"}>
-          {home && <Link to="/listings" aria-label="Saved properties" className="hidden text-[#0B3D2E] sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
+          {home && <Link to="/listings" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
           {user ? <Button variant="ghost" size="icon" className={"rounded-full bg-primary text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")} aria-label="My account" onClick={() => { setAccount(!account); setOpen(false); }}><User /></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
-          {home && <Button asChild className="hidden bg-[#2563EB] text-white hover:bg-[#1D4ED8] sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
+          {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
         </div>
       </div>
     </header>

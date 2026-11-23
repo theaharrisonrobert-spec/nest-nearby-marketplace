@@ -161,7 +161,7 @@ function Detail() {
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">{l.purpose === "sale" ? "For Sale" : "For Rent"}</span>
                   {l.sponsored && <span className="rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">Sponsored</span>}
-                  {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-orange-500 px-2 py-1 text-xs font-semibold text-white">Featured</span>}
+                  {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-white">Featured</span>}
                   <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">No Agent Fee</span>
                   <span className="text-xs leading-6 text-muted-foreground">{l.category}</span>
                 </div>

@@ -204,7 +204,7 @@ export function AdminIdentityReviewDialog({
 
             <section aria-label="Identity document status" className="space-y-3">
               {!person.id_document_path ? (
-                <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm font-medium">Awaiting ID Upload — identity approval is unavailable until an ID is uploaded.</p>
+                <p className="rounded-lg border border-amber-500/40 bg-primary/10 p-4 text-sm font-medium">Awaiting ID Upload — identity approval is unavailable until an ID is uploaded.</p>
               ) : (
                 <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">ID Uploaded{person.selfie_document_path ? " · Selfie uploaded" : " · Awaiting selfie upload"}</p>
               )}
