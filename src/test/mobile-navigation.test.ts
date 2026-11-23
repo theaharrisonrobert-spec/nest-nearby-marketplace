@@ -6,10 +6,13 @@ describe("mobile navigation active tab", () => {
     ["/", "home"],
     ["/listings", "search"],
     ["/search", "search"],
-    ["/messages", "messages"],
+    ["/saved", "saved"],
     ["/profile", "profile"],
-    ["/settings", "settings"],
   ] as const)("highlights %s as %s", (pathname, tab) => {
     expect(getActiveMobileTab(pathname)).toBe(tab);
+  });
+
+  it.each(["/messages", "/settings", "/landlords", "/help"]) ("does not highlight non-tab route %s", (pathname) => {
+    expect(getActiveMobileTab(pathname)).toBeNull();
   });
 });
