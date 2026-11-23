@@ -192,6 +192,7 @@ export type Database = {
           id_document_path: string | null
           id_number: string | null
           id_type: string | null
+          selfie_document_path: string | null
           is_blocked: boolean
           phone: string | null
           phone_verified_at: string | null
@@ -201,6 +202,7 @@ export type Database = {
           property_count: string | null
           role_selected: boolean
           verification_status: string
+          verification_name_matched: boolean
           verified_at: string | null
           verification_fee_paid: boolean
         }
@@ -217,6 +219,7 @@ export type Database = {
           id_document_path?: string | null
           id_number?: string | null
           id_type?: string | null
+          selfie_document_path?: string | null
           is_blocked?: boolean
           phone?: string | null
           phone_verified_at?: string | null
@@ -226,6 +229,7 @@ export type Database = {
           property_count?: string | null
           role_selected?: boolean
           verification_status?: string
+          verification_name_matched?: boolean
           verified_at?: string | null
           verification_fee_paid?: boolean
         }
@@ -242,6 +246,7 @@ export type Database = {
           id_document_path?: string | null
           id_number?: string | null
           id_type?: string | null
+          selfie_document_path?: string | null
           is_blocked?: boolean
           phone?: string | null
           phone_verified_at?: string | null
@@ -251,6 +256,7 @@ export type Database = {
           property_count?: string | null
           role_selected?: boolean
           verification_status?: string
+          verification_name_matched?: boolean
           verified_at?: string | null
           verification_fee_paid?: boolean
         }

@@ -1,10 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Bell, Check, Eye, ShieldX, X } from "lucide-react";
+import { Bell, Eye, ShieldX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { AdminPhaseOne } from "@/components/AdminPhaseOne";
+import { AdminIdentityReviewDialog, type AdminReviewPerson } from "@/components/AdminIdentityReviewDialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -24,15 +25,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type PendingUser = {
-  id: string;
-  full_name: string | null;
-  phone: string | null;
-  id_type: string | null;
-  id_number: string | null;
-  id_document_path: string | null;
-  created_at: string;
-};
+type PendingUser = AdminReviewPerson;
 
 type Notification = {
   id: string;
@@ -50,19 +43,24 @@ function AdminPage() {
   const [reviewFlags, setReviewFlags] = useState<ReviewFlag[]>([]);
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [selectedVerification, setSelectedVerification] = useState<PendingUser | null>(null);
 
   const load = useCallback(async () => {
     const { data: role } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
     setIsAdmin(!!role);
     if (!role) return;
-    const [{ data: p }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, phone, id_type, id_number, id_document_path, created_at")
-        .eq("verification_status", "pending").not("id_type", "is", null).order("created_at", { ascending: false }),
+    const [{ data: p, error: pError }, { data: directory, error: directoryError }, { data: n }, { data: r }, { data: visits }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, phone, account_type, approval_status, id_type, id_document_path, selfie_document_path, verification_status, created_at")
+        .eq("account_type", "landlord").eq("approval_status", "approved").neq("verification_status", "approved").order("created_at", { ascending: false }),
+      supabase.rpc("admin_user_directory", { _search: null }),
       supabase.from("admin_notifications").select("id, kind, message, created_at").order("created_at", { ascending: false }).limit(50),
       supabase.from("profiles").select("id, full_name, phone").eq("account_review_required", true),
       supabase.rpc("admin_site_visit_count"),
     ]);
-    setPending(p ?? []);
+    if (pError) toast.error("Could not load the identity review queue");
+    if (directoryError) toast.error("Could not load applicant email addresses");
+    const emailById = new Map((directory ?? []).map((person) => [person.id, person.email]));
+    setPending((p ?? []).map((person) => ({ ...person, email: emailById.get(person.id) ?? "Email unavailable" })));
     setNotifications(n ?? []);
     setReviewFlags(r ?? []);
     setVisitorCount(visits ?? 0);
@@ -70,17 +68,24 @@ function AdminPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function decide(id: string, approved: boolean) {
+  async function decide(id: string, approved: boolean): Promise<boolean> {
+    const applicant = pending.find((profile) => profile.id === id);
+    if (!applicant?.id_document_path || !applicant.selfie_document_path) {
+      toast.error("Awaiting both ID and selfie uploads before an identity decision.");
+      return false;
+    }
     setBusyId(id);
     const { error } = await supabase.from("profiles").update(
       approved
-        ? { verification_status: "approved", verified_at: new Date().toISOString() }
-        : { verification_status: "rejected" },
+        ? { verification_status: "approved", verified_at: new Date().toISOString(), verification_name_matched: true }
+        : { verification_status: "rejected", verification_name_matched: false },
     ).eq("id", id);
     setBusyId(null);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); return false; }
     toast.success(approved ? "User approved — they can now post" : "Submission rejected");
     setPending((list) => list.filter((p) => p.id !== id));
+    setSelectedVerification(null);
+    return true;
   }
 
   async function clearReview(id: string) {
@@ -88,12 +93,6 @@ function AdminPage() {
     if (error) { toast.error(error.message); return; }
     setReviewFlags((flags) => flags.filter((flag) => flag.id !== id));
     toast.success("Account review flag cleared");
-  }
-
-  async function viewDocument(path: string) {
-    const { data, error } = await supabase.storage.from("id-documents").createSignedUrl(path, 600);
-    if (error || !data?.signedUrl) { toast.error("Could not open document"); return; }
-    window.open(data.signedUrl, "_blank", "noopener");
   }
 
   if (isAdmin === false) {
@@ -120,39 +119,35 @@ function AdminPage() {
 
         <AdminPhaseOne />
 
-        <h2 className="mt-10 text-xl font-bold">Pending verifications ({pending.length})</h2>
+        <h2 className="mt-10 text-xl font-bold">Identity verification review queue ({pending.length})</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Open a landlord to view their ID and selfie before deciding. Accounts without an ID remain in the queue as awaiting upload.</p>
         {pending.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No one is waiting for approval right now.</p>
+          <p className="mt-3 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">No landlord identity reviews are waiting.</p>
         ) : (
           <div className="mt-3 space-y-3">
             {pending.map((p) => (
-              <div key={p.id} className="rounded-xl bg-card p-5 shadow-card">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="font-semibold">{p.full_name ?? "Unnamed user"}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {p.id_type} · {p.id_number} · {p.phone ?? "no phone"}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">Joined {new Date(p.created_at).toLocaleDateString()}</div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {p.id_document_path && (
-                      <button onClick={() => viewDocument(p.id_document_path!)} className="flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
-                        <Eye className="h-4 w-4" /> View ID
-                      </button>
-                    )}
-                    <button disabled={busyId === p.id} onClick={() => decide(p.id, true)} className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60">
-                      <Check className="h-4 w-4" /> Approve
-                    </button>
-                    <button disabled={busyId === p.id} onClick={() => decide(p.id, false)} className="flex items-center gap-1 rounded-lg border border-destructive px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-60">
-                      <X className="h-4 w-4" /> Reject
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <button key={p.id} type="button" onClick={() => setSelectedVerification(p)} className="flex w-full flex-wrap items-center justify-between gap-4 rounded-xl bg-card p-5 text-left shadow-card transition hover:ring-2 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <span>
+                  <span className="block font-semibold">{p.full_name ?? "Unnamed user"}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{p.email} · {p.phone ?? "No phone"} · Landlord</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">Joined {new Date(p.created_at).toLocaleDateString("en-NG")}{p.id_type ? ` · ${p.id_type}` : ""}</span>
+                </span>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.id_document_path ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-700"}`}>
+                  {p.id_document_path ? "ID Uploaded" : "Awaiting ID Upload"}
+                </span>
+              </button>
             ))}
           </div>
         )}
+        <AdminIdentityReviewDialog
+          open={!!selectedVerification}
+          onOpenChange={(open) => { if (!open) setSelectedVerification(null); }}
+          person={selectedVerification}
+          mode="identity"
+          busy={selectedVerification ? busyId === selectedVerification.id : false}
+          onApprove={() => { if (selectedVerification) void decide(selectedVerification.id, true); }}
+          onReject={() => { if (selectedVerification) void decide(selectedVerification.id, false); }}
+        />
 
         <h2 className="mt-10 text-xl font-bold">Landlord accounts under review ({reviewFlags.length})</h2>
         {reviewFlags.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No landlord accounts are currently flagged.</p> : <div className="mt-3 space-y-3">{reviewFlags.map((flag) => <div key={flag.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-card p-5 shadow-card"><div><p className="font-semibold">{flag.full_name ?? "Unnamed landlord"}</p><p className="text-sm text-muted-foreground">{flag.phone ?? "No phone on profile"} · Three or more ratings below 3 stars</p></div><button onClick={() => void clearReview(flag.id)} className="rounded-lg border border-primary px-3 py-2 text-sm font-medium text-primary">Clear review flag</button></div>)}</div>}

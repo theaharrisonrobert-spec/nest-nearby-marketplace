@@ -92,6 +92,20 @@
       "when": 1795381011116,
       "tag": "0012_role_specific_welcome_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795389630000,
+      "tag": "20261122232030_landlord_id_selfie_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795399872000,
+      "tag": "20261123021112_admin_verification_document_read",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { ShieldCheck, Clock, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { startPaidPlan } from "@/lib/payments";
+import { MAX_VERIFICATION_FILE_SIZE, validateLandlordVerification } from "@/lib/landlord-verification";
 
 export const Route = createFileRoute("/_authenticated/verify")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/verify")({
 
 type Profile = {
   full_name: string | null;
+  account_type: string;
   verification_status: string;
   id_type: string | null;
   verification_fee_paid: boolean;
@@ -37,7 +39,7 @@ function VerifyPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.from("profiles").select("full_name, verification_status, id_type, verification_fee_paid, phone, phone_verified_at").eq("id", user.id).maybeSingle()
+    supabase.from("profiles").select("full_name, account_type, verification_status, id_type, verification_fee_paid, phone, phone_verified_at").eq("id", user.id).maybeSingle()
       .then(({ data }) => setProfile(data));
   }, [user.id]);
 
@@ -46,24 +48,48 @@ function VerifyPage() {
     const f = new FormData(e.currentTarget);
     if (!profile?.verification_fee_paid) { toast.error("Pay the one-time ₦1,500 NIN verification fee before submitting your NIN"); return; }
     const nin = String(f.get("id_number") ?? "").replace(/\D/g, "");
-    if (!profile?.phone_verified_at) { toast.error("Verify your phone number before submitting your NIN"); return; }
     if (!/^\d{11}$/.test(nin)) { toast.error("Enter a valid 11-digit NIN"); return; }
-    const file = f.get("document") as File;
-    if (!file || !file.size) { toast.error("Please upload a photo of your ID document"); return; }
+    const documentValue = f.get("document");
+    const selfieValue = f.get("selfie");
+    const idFile = documentValue instanceof File ? documentValue : null;
+    const selfieFile = selfieValue instanceof File ? selfieValue : null;
+    const validationError = validateLandlordVerification({
+      accountType: profile?.account_type,
+      verificationFeePaid: !!profile?.verification_fee_paid,
+      phoneVerified: !!profile?.phone_verified_at,
+      registeredName: profile?.full_name,
+      nameMatchConfirmed: f.get("name_matches") === "on",
+      idFile,
+      selfieFile,
+    });
+    if (validationError) { toast.error(validationError); return; }
+    if (!idFile || !selfieFile) return;
+
     setBusy(true);
-    const path = `${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.]/g, "")}`;
-    const up = await supabase.storage.from("id-documents").upload(path, file);
-    if (up.error) { setBusy(false); toast.error("Document upload failed — try again"); return; }
-    const { error } = await supabase.from("profiles").update({
-      id_type: String(f.get("id_type")),
-      id_number: nin,
-      id_document_path: path,
-      verification_status: "pending",
-    }).eq("id", user.id);
-    if (error) { setBusy(false); toast.error(error.message); return; }
-    setBusy(false);
-    toast.success("Documents submitted for review");
-    setProfile((p) => p && { ...p, verification_status: "pending" });
+    try {
+      const submissionId = crypto.randomUUID();
+      const safeName = (file: File) => file.name.replace(/[^\w.-]/g, "_").slice(-120) || "upload";
+      const idPath = `${user.id}/${submissionId}/id-${safeName(idFile)}`;
+      const selfiePath = `${user.id}/${submissionId}/selfie-${safeName(selfieFile)}`;
+      const idUpload = await supabase.storage.from("id-documents").upload(idPath, idFile, { contentType: idFile.type, upsert: false });
+      if (idUpload.error) { toast.error("ID upload failed — check the file and try again"); return; }
+      const selfieUpload = await supabase.storage.from("id-documents").upload(selfiePath, selfieFile, { contentType: selfieFile.type, upsert: false });
+      if (selfieUpload.error) { toast.error("Selfie upload failed — check the file and try again"); return; }
+      const { error } = await supabase.from("profiles").update({
+        id_type: String(f.get("id_type")),
+        id_number: nin,
+        id_document_path: idPath,
+        selfie_document_path: selfiePath,
+        verification_status: "pending",
+      }).eq("id", user.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("ID and selfie submitted for review");
+      setProfile((p) => p && { ...p, verification_status: "pending" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Document submission failed — try again");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const input = "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary";
@@ -89,6 +115,8 @@ function VerifyPage() {
             <h2 className="mt-3 text-xl font-bold">Under review</h2>
             <p className="mt-1 text-sm text-muted-foreground">Your documents are being reviewed. You'll be able to post as soon as you're approved.</p>
           </div>
+        ) : profile && profile.account_type !== "landlord" ? (
+          <div className="mt-8 rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">Landlord identity verification is available only to landlord accounts.</div>
         ) : (
           <div className="mt-8 space-y-5">
           {!profile?.phone_verified_at && <section className="rounded-xl bg-card p-6 shadow-card"><h2 className="font-bold">Verify your phone number</h2><p className="mt-1 text-sm text-muted-foreground">Phone verification is required before we can review your NIN.</p><Link to="/verify-phone" className="mt-3 inline-block text-sm font-semibold text-primary underline">Verify phone by SMS</Link></section>}
@@ -116,12 +144,25 @@ function VerifyPage() {
               <input name="id_number" required inputMode="numeric" minLength={11} maxLength={11} placeholder="Enter your 11-digit NIN" className={input} />
             </div>
             <div>
-              <label className={label}>Photo of the document</label>
-              <input name="document" type="file" required accept="image/*,.pdf" className="text-sm" />
-              <p className="mt-1 text-xs text-muted-foreground">A clear photo or scan. Only visible to the review team.</p>
+              <label className={label}>Photo or scan of your ID</label>
+              <input name="document" type="file" required accept="image/jpeg,image/png,image/webp,application/pdf" className="text-sm" />
+              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP or PDF, up to 10 MB. Only you and the review team can access it.</p>
+            </div>
+            <div>
+              <label className={label}>Selfie holding your ID</label>
+              <input name="selfie" type="file" required accept="image/jpeg,image/png,image/webp" className="text-sm" />
+              <p className="mt-1 text-xs text-muted-foreground">Use a clear selfie where your face and ID are visible. JPG, PNG or WebP, up to 10 MB.</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium">Registered name</p>
+              <p className="mt-1 text-sm">{profile?.full_name || "Name not set"}</p>
+              <label className="mt-3 flex items-start gap-2 text-sm">
+                <input name="name_matches" type="checkbox" required className="mt-1" />
+                <span>I confirm the name on my ID matches my registered name above. An admin will compare them manually.</span>
+              </label>
             </div>
             <button disabled={busy || !profile?.verification_fee_paid || !profile?.phone_verified_at} className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground disabled:opacity-60">
-              {busy ? "Submitting…" : "Submit for approval"}
+              {busy ? "Submitting…" : "Submit ID and selfie for review"}
             </button>
           </form>
           </div>
