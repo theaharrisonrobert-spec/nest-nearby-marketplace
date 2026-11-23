@@ -20,7 +20,7 @@ export function ProfileViewPage({ user }: { user: User }) {
     queryKey: ["profile-view", user.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles")
-        .select("full_name, phone, avatar_url, account_type, verification_status, id_document_path")
+        .select("full_name, phone, avatar_url, account_type, professional_type, verification_status, id_document_path")
         .eq("id", user.id).maybeSingle();
       if (error) throw error;
       return data;
@@ -103,7 +103,8 @@ export function ProfileViewPage({ user }: { user: User }) {
       input.value = "";
     }
   }
-  const role = isAdmin ? "Admin" : profile?.account_type === "landlord" ? "Landlord" : "Tenant";
+  const accountTypeLabel = profile?.account_type === "landlord" ? profile.professional_type === "agent_realtor" ? "Agent" : "Landlord" : "Tenant";
+  const role = isAdmin ? `Admin • ${accountTypeLabel}` : accountTypeLabel;
   const verificationStatus = profile?.verification_status === "approved"
     ? "Verified"
     : profile?.verification_status === "pending"
@@ -117,7 +118,9 @@ export function ProfileViewPage({ user }: { user: User }) {
   return <div className="min-h-screen bg-background text-foreground">
     <SiteHeader />
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-28 sm:px-5 sm:py-12">
-      <div><p className="text-sm font-semibold uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 text-3xl font-bold">Profile</h1><p className="mt-2 text-muted-foreground">Your RentReady account details.</p></div>
+      <div><p className="text-sm font-semibold uppercase tracking-widest text-primary">Your account</p><h1 className="mt-2 text-3xl font-bold">Profile</h1><p className="mt-2 text-muted-foreground">Your RentReady account details.</p>
+        <div className="mt-4">{isAdmin || profile?.account_type === "landlord" ? <Button asChild className="h-12 bg-primary font-semibold text-white hover:bg-primary/90"><Link to="/post">+ Post Property</Link></Button> : <Button asChild className="h-12 bg-primary font-semibold text-white hover:bg-primary/90"><Link to="/settings" hash="account-type">Become a Landlord to Post</Link></Button>}</div>
+      </div>
       <section className={cardClass} aria-label="Profile details">
         {isLoading ? <p className="text-muted-foreground">Loading your profile…</p> : <>
           <div className="flex flex-wrap items-center gap-5">

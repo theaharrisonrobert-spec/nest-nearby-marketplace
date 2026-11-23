@@ -37,13 +37,18 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
     enabled: !!user,
     queryFn: async () => {
       if (!user) return null;
-      const { data, error } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle();
+      const { data, error } = await supabase.from("profiles").select("full_name, avatar_url, account_type, professional_type").eq("id", user.id).maybeSingle();
       if (error) throw error;
-      if (!data?.avatar_url) return { fullName: data?.full_name ?? null, avatarUrl: null };
+      if (!data?.avatar_url) return { fullName: data?.full_name ?? null, avatarUrl: null, accountType: data?.account_type ?? null, professionalType: data?.professional_type ?? null };
       const { data: signed, error: signedError } = await supabase.storage.from("profile-photos").createSignedUrl(data.avatar_url, 60 * 60);
       if (signedError) throw signedError;
-      return { fullName: data.full_name, avatarUrl: signed.signedUrl };
+      return { fullName: data.full_name, avatarUrl: signed.signedUrl, accountType: data.account_type, professionalType: data.professional_type };
     },
+  });
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["home-greeting-admin", user?.id],
+    enabled: home && !!user,
+    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data ?? false : false,
   });
   useEffect(() => {
     if (!open) {
@@ -79,7 +84,7 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
           {user ? <Link to="/profile" aria-label="Profile" className="box-border flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary text-primary-foreground lg:h-10 lg:w-10">
             {headerProfile?.avatarUrl ? <img src={headerProfile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-base font-bold">{headerInitial}</span>}
           </Link> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
-          {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
+          {home && (user ? isAdmin || headerProfile?.accountType === "landlord" ? <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">+ Post Property</Link></Button> : headerProfile?.accountType === "tenant" ? <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/settings" hash="account-type">Become a Landlord to Post</Link></Button> : null : <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/auth" search={{ mode: "signup", type: "landlord" }}>Post Property</Link></Button>)}
         </div>
       </div>
     </header>

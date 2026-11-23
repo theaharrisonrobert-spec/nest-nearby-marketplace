@@ -27,11 +27,17 @@ function Index() {
     enabled: !!user,
     queryFn: async () => {
       if (!user) return null;
-      const { data, error } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      const { data, error } = await supabase.from("profiles").select("full_name, account_type, professional_type").eq("id", user.id).maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["home-greeting-admin", user?.id],
+    enabled: !!user,
+    queryFn: async () => user ? (await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })).data ?? false : false,
+  });
+  const canPostProperty = isAdmin || profile?.account_type === "landlord";
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
   const greeting = user ? (firstName ? `Hi, ${firstName}` : "Hi there") : "Find your perfect rental in Lagos";
   const { data: featured = [], isLoading } = useQuery({
@@ -44,7 +50,7 @@ function Index() {
       return data ?? [];
     },
   });
-  return <div className="min-h-screen bg-background pb-56 text-foreground lg:pb-28">
+  return <div className="min-h-screen bg-background text-foreground">
     <SiteHeader home />
     <section className="relative flex min-h-[580px] items-center overflow-hidden bg-background sm:min-h-[640px]">
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-5 py-16 text-center md:py-24">
@@ -65,7 +71,8 @@ function Index() {
       <div className="mt-8 rounded-2xl border border-border bg-white px-6 py-12 text-center"><Building2 className="mx-auto h-9 w-9 text-primary" /><h3 className="mt-4 text-lg font-semibold">No approved properties to feature yet</h3><p className="mt-2 text-sm text-muted-foreground">Browse all properties or check back later.</p><Button asChild className="mt-5 bg-primary text-white hover:bg-primary/90"><Link to="/listings">Browse properties</Link></Button></div>}
     </div></section>
     <section className="px-5 py-16 md:py-20"><div className="mx-auto grid max-w-7xl items-center gap-10 rounded-3xl bg-primary px-7 py-10 text-white sm:px-12 md:grid-cols-[1fr_auto] md:py-14">
-      <div><p className="text-sm font-semibold uppercase tracking-widest text-white/75">For property owners</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">List your property</h2><p className="mt-4 max-w-2xl text-white/85">Add your property to RentReady and connect directly with people looking for a place in Nigeria.</p></div><Button asChild className="h-12 bg-white px-6 font-semibold text-primary hover:bg-white/90"><Link to="/post">Post Property <ArrowRight /></Link></Button>
+      <div><p className="text-sm font-semibold uppercase tracking-widest text-white/75">For property owners</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">List your property</h2><p className="mt-4 max-w-2xl text-white/85">Add your property to RentReady and connect directly with people looking for a place in Nigeria.</p></div>
+      {canPostProperty ? <Button asChild className="h-12 bg-white px-6 font-semibold text-primary hover:bg-white/90"><Link to="/post">+ Post Property <ArrowRight /></Link></Button> : user ? <Button asChild className="h-12 bg-white px-6 font-semibold text-primary hover:bg-white/90"><Link to="/settings" hash="account-type">Become a Landlord to Post <ArrowRight /></Link></Button> : <Button asChild className="h-12 bg-white px-6 font-semibold text-primary hover:bg-white/90"><Link to="/auth" search={{ mode: "signup", type: "landlord" }}>Become a Landlord to Post <ArrowRight /></Link></Button>}
     </div></section>
     <section className="bg-muted px-5 py-16 md:py-20"><div className="mx-auto max-w-7xl"><Heading eyebrow="A simpler way to find your next place" title="Why choose RentReady" text="Straightforward property search, with the tools you need to make your next move." />
       <div className="mt-9 grid gap-5 md:grid-cols-3"><Reason icon={Search} title="Search across Nigeria" text="Explore properties by location, purpose and property type." /><Reason icon={MessageCircle} title="Connect directly" text="Contact property owners through RentReady to ask questions and arrange a viewing." /><Reason icon={ShieldCheck} title="Reviewed listings" text="Approved listings are reviewed before they appear as live properties." /></div>

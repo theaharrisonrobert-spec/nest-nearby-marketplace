@@ -18,6 +18,7 @@ const DEFAULT_NOTIFICATIONS = {
   verification_updates: true,
 };
 type NotificationKey = keyof typeof DEFAULT_NOTIFICATIONS;
+type ProfileAccountType = "tenant" | "landlord" | "agent";
 
 const NOTIFICATIONS: { key: NotificationKey; title: string; detail: string }[] = [
   { key: "new_messages", title: "New messages", detail: "When someone sends you a message." },
@@ -34,6 +35,7 @@ export function ProfileSettingsPage({ user }: { user: User }) {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [accountType, setAccountType] = useState<ProfileAccountType>("tenant");
   const [phone, setPhone] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function ProfileSettingsPage({ user }: { user: User }) {
     queryKey: ["settings-profile", user.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles")
-        .select("full_name, phone, phone_verified_at, avatar_url, notification_preferences")
+        .select("full_name, phone, phone_verified_at, avatar_url, notification_preferences, account_type, professional_type")
         .eq("id", user.id).maybeSingle();
       if (error) throw error;
       return data;
@@ -63,7 +65,8 @@ export function ProfileSettingsPage({ user }: { user: User }) {
     setFirstName(parts.shift() ?? "");
     setLastName(parts.join(" "));
     setPhone(profile.phone ?? "");
-  }, [profile?.full_name, profile?.phone]);
+    setAccountType(profile.account_type === "landlord" && profile.professional_type === "agent_realtor" ? "agent" : profile.account_type === "landlord" ? "landlord" : "tenant");
+  }, [profile?.full_name, profile?.phone, profile?.account_type, profile?.professional_type]);
 
   useEffect(() => {
     if (!photoFile) { setPhotoPreview(null); return; }
@@ -101,7 +104,14 @@ export function ProfileSettingsPage({ user }: { user: User }) {
         if (uploadError) throw uploadError;
         avatarPath = path;
       }
-      const { error } = await supabase.from("profiles").update({ full_name: fullName, phone: phone.trim() || null, avatar_url: avatarPath }).eq("id", user.id);
+      const { error } = await supabase.from("profiles").update({
+        full_name: fullName,
+        phone: phone.trim() || null,
+        avatar_url: avatarPath,
+        account_type: accountType === "tenant" ? "tenant" : "landlord",
+        professional_type: accountType === "tenant" ? null : accountType === "agent" ? "agent_realtor" : "property_owner",
+        role_selected: true,
+      }).eq("id", user.id);
       if (error) throw error;
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["settings-profile", user.id] }),
@@ -193,6 +203,14 @@ export function ProfileSettingsPage({ user }: { user: User }) {
             </label>
           </div>
           <form onSubmit={(event) => void saveProfile(event)} className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label id="account-type" className="grid gap-1.5 text-sm font-medium sm:col-span-2">Account Type
+              <select value={accountType} onChange={(event) => setAccountType(event.target.value as ProfileAccountType)} className={`${fieldClass} rounded-md border border-border px-3`}>
+                <option value="tenant">Tenant</option>
+                <option value="landlord">Landlord</option>
+                <option value="agent">Agent</option>
+              </select>
+              <span className="text-xs font-normal text-muted-foreground">Landlord and Agent accounts can post properties after required verification.</span>
+            </label>
             <label className="grid gap-1.5 text-sm font-medium">First Name<Input autoComplete="given-name" className={fieldClass} value={firstName} onChange={(event) => setFirstName(event.target.value)} required /></label>
             <label className="grid gap-1.5 text-sm font-medium">Last Name<Input autoComplete="family-name" className={fieldClass} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label>
             <label className="grid gap-1.5 text-sm font-medium">Phone<Input type="tel" autoComplete="tel" className={fieldClass} value={phone} onChange={(event) => setPhone(event.target.value)} /><span className="text-xs font-normal text-muted-foreground">{profile?.phone_verified_at ? "Your phone is verified and can’t be changed here." : ""}</span></label>

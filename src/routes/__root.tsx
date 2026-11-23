@@ -113,7 +113,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <HeadContent />
-      <div className="min-h-screen pb-32 lg:pb-28">
+      <div className="min-h-screen pb-56 lg:pb-28">
         <Outlet />
       </div>
       <Toaster />
