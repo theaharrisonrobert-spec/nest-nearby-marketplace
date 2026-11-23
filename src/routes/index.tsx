@@ -7,6 +7,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES, formatNaira, LISTING_COLS, listingImage, PERIODS, type Listing } from "@/lib/listings";
 import { supabase } from "@/integrations/supabase/client";
+import heroApartment from "@/assets/apartment.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -50,9 +51,9 @@ function Index() {
       return data ?? [];
     },
   });
-  return <div className="min-h-screen bg-background text-foreground">
+  return <div className="min-h-screen bg-[#F5F1E8] text-foreground">
     <SiteHeader home />
-    <section className="relative flex min-h-[580px] items-center overflow-hidden bg-background sm:min-h-[640px]">
+    <section className="home-hero-background relative flex min-h-[580px] items-center overflow-hidden sm:min-h-[640px]" style={{ "--home-hero-photo": `url(${heroApartment})` } as React.CSSProperties}>
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-5 py-16 text-center md:py-24">
         <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">{greeting}</h1>
         <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">Discover homes, shops and spaces to rent or buy across Nigeria.</p>
