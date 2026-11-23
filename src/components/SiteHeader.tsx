@@ -76,9 +76,9 @@ export function SiteHeader({ overlay = false, home = false }: { overlay?: boolea
         </nav>}
         <div className={(home ? "ml-auto flex items-center gap-2 sm:gap-4" : "justify-self-end") + " relative"}>
           {home && <Link to="/saved" aria-label="Saved properties" className="hidden text-primary sm:inline-flex"><Heart className="h-5 w-5" /></Link>}
-          {user ? <Button asChild variant="ghost" size="icon" className={"h-10 w-10 overflow-hidden rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90 " + (home ? "" : "justify-self-end")}><Link to="/profile" aria-label="Profile" className="flex h-full w-full items-center justify-center">
-            {headerProfile?.avatarUrl ? <img src={headerProfile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-lg font-bold">{headerInitial}</span>}
-          </Link></Button> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
+          {user ? <Link to="/profile" aria-label="Profile" className="box-border flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary text-primary-foreground lg:h-10 lg:w-10">
+            {headerProfile?.avatarUrl ? <img src={headerProfile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-base font-bold">{headerInitial}</span>}
+          </Link> : <Button asChild variant="link" className={home ? "text-foreground" : "justify-self-end px-0 " + (overlay ? "text-ink-foreground" : "text-primary")}><Link to="/auth" search={{ mode: "signin" }}>Sign in</Link></Button>}
           {home && <Button asChild className="hidden bg-primary text-white hover:bg-primary/90 sm:inline-flex"><Link to="/post">Post Property</Link></Button>}
         </div>
       </div>
