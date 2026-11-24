@@ -7,12 +7,12 @@ import { useSession } from "@/hooks/use-session";
 const categories = ["Report listing", "Report scam", "Payment", "Login", "Landlord not responding", "Other"] as const;
 type Category = typeof categories[number];
 const answers: Record<Category, string> = {
-  "Report listing": "Open the property page and use Report as Rented or Report this listing. Include the listing link and what you noticed.",
-  "Report scam": "Do not send money or share an OTP. Keep messages and receipts, report the listing, and contact your bank immediately if you already paid.",
-  Payment: "RentReady does not collect rent or take rent commission. For a RentReady Premium charge, keep your Paystack reference and never share card PINs or OTPs.",
-  Login: "Check that your email is correct, then use Forgot password on the sign-in page. If your email is unconfirmed, request a fresh confirmation link.",
-  "Landlord not responding": "Send one clear message and allow time for a reply. Do not pay before an in-person viewing and ownership checks.",
-  Other: "Tell us what happened and the page or property involved. A support ticket will be created for the team.",
+  "Report listing": "Thanks for reporting. Please send the link to the listing + what's wrong with it. Our team will review it within 24 hours and remove it if it breaks our rules.",
+  "Report scam": "I'm sorry about this. Please don't send any more money. Send us the agent's name/number + screenshots + the listing link. We will block the account and help you report it.",
+  Payment: "For payment: You pay only through RentReady after your inspection is confirmed. We accept bank transfer / card. Never pay an agent directly before inspection. Need help with a specific payment? Send your reference.",
+  Login: "Can't log in? Tap Forgot Password on the login page to reset it. If you didn't get the SMS code, wait 2 mins and tap Resend. Still stuck? Tell us your phone number here.",
+  "Landlord not responding": "Sorry about that. Tell us the property name + landlord's name. We will contact them today and if they don't respond in 24 hours, we will suggest similar properties for you.",
+  Other: "No problem, connecting you to our team now. Please tell us what you need help with.",
 };
 
 export function SupportWidget() {
