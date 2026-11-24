@@ -25,7 +25,8 @@ export const ACCOUNT_TYPES = {
 export type AccountType = keyof typeof ACCOUNT_TYPES;
 
 
-  { name: "Apartments", sub: "For Rent & Sale", img: apartmentCard },
+  export const CATEGORIES = [
+    { name: "Apartments", sub: "For Rent & Sale", img: apartmentCard },
   { name: "Houses", sub: "Duplexes & bungalows", img: house },
   { name: "Shops", sub: "For Rent & Sale", img: shop },
   { name: "Malls", sub: "Mall units & plazas", img: mall },
