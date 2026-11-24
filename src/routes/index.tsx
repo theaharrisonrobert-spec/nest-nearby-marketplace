@@ -55,7 +55,7 @@ function Index() {
     <SiteHeader home />
     <section className="home-hero-background relative flex min-h-[580px] items-center overflow-hidden sm:min-h-[640px]" style={{ "--home-hero-photo": `url(${heroApartment})` } as React.CSSProperties}>
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-5 py-16 text-center md:py-24">
-        <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text- white sm:text-5xl md:text-6xl lg:text-7xl">{greeting}</h1>
+        <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">{greeting}</h1>
         <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">Discover homes, shops and spaces to rent or buy across Nigeria.</p>
         <HeroSearch />
       </div>
