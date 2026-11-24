@@ -136,7 +136,7 @@ export function ProfileViewPage({ user }: { user: User }) {
             <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-soft text-primary sm:h-36 sm:w-36">
               {photoUrl ? <img src={photoUrl} alt={`${firstName || "Profile"} profile photo`} className="h-full w-full object-cover" /> : <span className="text-5xl font-bold">{firstName.charAt(0).toUpperCase() || "?"}</span>}
             </div>
-            <div className="min-w-0"><h2 className="text-2xl font-bold">Hi, {firstName || "there"}</h2><span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-primary">{role}</span>
+            <div className="min-w-0"><h2 className="text-2×i font-bold text-white">Hi, {firstName || "there"}</h2><span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-primary">{role}</span>
               <div className="mt-4"><Button type="button" disabled={photoUploading} onClick={() => photoInput.current?.click()} className="h-11 bg-primary font-semibold text-white hover:bg-primary/90"><Camera className="mr-2 h-4 w-4" />{photoUploading ? "Uploading photo…" : "Edit / Change Photo"}</Button>
                 <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void uploadPhoto(event)} className="sr-only" aria-label="Choose profile photo" />
                 {photoError && <p role="alert" className="mt-2 max-w-sm text-sm text-destructive">{photoError}</p>}
