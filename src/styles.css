@@ -71,8 +71,8 @@
 
 :root {
   --radius: 0.75rem;
-  --brand: #FF6B35;
-  --auth-highlight: #FF6B35;
+  --brand: #173F30;
+  --auth-highlight: #173F30;
   --brand-foreground: #FFFFFF;
   --brand-soft: #FFF0E6;
   --ink: #1A1A1A;
@@ -85,7 +85,7 @@
   --card-foreground: #1A1A1A;
   --popover: #FFFFFF;
   --popover-foreground: #1A1A1A;
-  --primary: #FF6B35;
+  --primary: #173F30;
   --primary-foreground: #FFFFFF;
   --secondary: #FFF0E6;
   --secondary-foreground: #1A1A1A;
@@ -105,7 +105,7 @@
   --chart-5: #1A1A1A;
   --sidebar: #FFF8F0;
   --sidebar-foreground: #1A1A1A;
-  --sidebar-primary: #FF6B35;
+  --sidebar-primary: #173F30;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #FFF0E6;
   --sidebar-accent-foreground: #1A1A1A;
