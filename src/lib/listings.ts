@@ -6,7 +6,8 @@ import office from "@/assets/office.jpg";
 import land from "@/assets/land.jpg";
 import warehouse from "@/assets/warehouse.jpg";
 import hall from "@/assets/hall.jpg";
-import hero from "@/assets/hero.jpg";
+import apartmentCard from "@/assets/apartment-card.jpg";
+import house from "@/assets/House.jpg";
 
 type Row = Database["public"]["Tables"]["listings"]["Row"];
 export type Listing = Omit<Row, "contact_phone" | "address" | "promotion_requested">;
@@ -23,9 +24,9 @@ export const ACCOUNT_TYPES = {
 } as const;
 export type AccountType = keyof typeof ACCOUNT_TYPES;
 
-export const CATEGORIES = [
-  { name: "Apartments", sub: "For Rent & Sale", img: apartment },
-  { name: "Houses", sub: "Duplexes & bungalows", img: hero },
+
+  { name: "Apartments", sub: "For Rent & Sale", img: apartmentCard },
+  { name: "Houses", sub: "Duplexes & bungalows", img: house },
   { name: "Shops", sub: "For Rent & Sale", img: shop },
   { name: "Malls", sub: "Mall units & plazas", img: mall },
   { name: "Office Spaces", sub: "For Rent & Sale", img: office },
