@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { AMENITIES, CATEGORIES, STATES } from "@/lib/listings";
+import { AMENITIES, APARTMENT_SUBTYPES, CATEGORIES, STATES } from "@/lib/listings";
 import { canPublish } from "@/lib/marketplace-rules";
 
 export const Route = createFileRoute("/_authenticated/post")({
@@ -67,6 +67,7 @@ function PostPage() {
       title: String(f.get("title")),
       description: String(f.get("description") || ""),
       category: String(f.get("category")),
+      property_subtype: String(f.get("property_subtype") || "") || null,
       purpose,
       price,
       price_period: purpose === "sale" ? "once" : String(f.get("period")),
@@ -94,6 +95,7 @@ function PostPage() {
   const input = "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary";
   const label = "mb-1 block text-sm font-medium";
   const [purpose, setPurpose] = useState("rent");
+  const [category, setCategory] = useState<string>(CATEGORIES[0].name);
 
   if (profileLoading) return <div className="min-h-screen bg-background"><SiteHeader /><p className="mx-auto max-w-xl px-5 py-16 text-muted-foreground">Loading your account…</p></div>;
   if (!profile) return <div className="min-h-screen bg-background"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16"><h1 className="text-3xl font-bold">Account unavailable</h1><p className="mt-3 text-muted-foreground">We couldn’t load your profile. Please refresh and try again.</p></div><SiteFooter /></div>;
@@ -129,7 +131,8 @@ function PostPage() {
         <form key={profile ? "p" : "n"} onSubmit={onSubmit} className="mt-6 grid gap-4 rounded-xl bg-card p-6 shadow-card sm:grid-cols-2">
           <div className="sm:col-span-2"><label className={label}>Title</label><input name="title" required placeholder="e.g. 2 Bedroom Flat in Yaba" className={input} /></div>
           <div><label className={label}>Property type</label>
-            <select name="category" className={input}>{CATEGORIES.map((c) => <option key={c.name}>{c.name}</option>)}</select></div>
+            <select name="category" value={category} onChange={(event) => setCategory(event.target.value)} className={input}>{CATEGORIES.map((c) => <option key={c.name}>{c.name}</option>)}</select></div>
+          {category === "Apartment" && <div><label className={label}>Apartment type</label><select name="property_subtype" className={input}>{APARTMENT_SUBTYPES.map((subtype) => <option key={subtype}>{subtype}</option>)}</select></div>}
           <div><label className={label}>Rent or sale</label>
             <select name="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} className={input}><option value="rent">For Rent</option><option value="sale">For Sale</option></select></div>
           <div><label className={label}>Your price (₦)</label><input name="price" required inputMode="numeric" placeholder="e.g. 1500000" className={input} /></div>

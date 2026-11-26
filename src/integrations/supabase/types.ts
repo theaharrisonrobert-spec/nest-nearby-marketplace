@@ -61,6 +61,7 @@ export type Database = {
           landmarks: string | null
           negotiable: boolean
           owner_id: string | null
+          property_subtype: string | null
           price: number
           price_period: string
           rejection_reason: string | null
@@ -95,6 +96,7 @@ export type Database = {
           landmarks?: string | null
           negotiable?: boolean
           owner_id?: string | null
+          property_subtype?: string | null
           price: number
           price_period?: string
           rejection_reason?: string | null
@@ -129,6 +131,7 @@ export type Database = {
           landmarks?: string | null
           negotiable?: boolean
           owner_id?: string | null
+          property_subtype?: string | null
           price?: number
           price_period?: string
           rejection_reason?: string | null

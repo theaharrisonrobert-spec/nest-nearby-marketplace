@@ -164,7 +164,7 @@ function Detail() {
                   {l.featured_until && new Date(l.featured_until).getTime() > Date.now() && <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-white">Featured</span>}
                   {l.boosted_until && new Date(l.boosted_until).getTime() > Date.now() && <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">Boosted</span>}
                   <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">No Agent Fee</span>
-                  <span className="text-xs leading-6 text-muted-foreground">{l.category}</span>
+                  <span className="text-xs leading-6 text-muted-foreground">{l.category}{l.category === "Apartment" && l.property_subtype ? ` · ${l.property_subtype}` : ""}</span>
                 </div>
                 <div className="mt-3 text-3xl font-bold text-primary">{formatNaira(l.price)} <span className="text-base font-normal text-foreground">{PERIODS[l.price_period]}</span>
                   {l.negotiable && <span className="ml-2 rounded bg-brand-soft px-2 py-0.5 text-xs font-medium text-primary">Negotiable</span>}</div>

@@ -13,7 +13,8 @@ describe("Marketplace rules", () => {
     expect(canPublish("agent", "approved")).toBe(false);
   });
   it("returns only shops when shops are selected", () => {
-    expect(["Shops", "Malls", "Apartments", "Land"].filter(c => categoryMatches(c, "Shops"))).toEqual(["Shops"]);
+    expect(["Shops", "Malls", "Apartment", "Land"].filter(c => categoryMatches(c, "Shops"))).toEqual(["Shops"]);
+    expect(["Shops", "Apartment", "Land"].filter(c => categoryMatches(c, "Apartment"))).toEqual(["Apartment"]);
   });
   it.each(["Malls", "Office Spaces", "Event Halls", "Land", "Other Spaces"])("keeps %s separate", category => {
     expect(categoryMatches(category, category)).toBe(true);

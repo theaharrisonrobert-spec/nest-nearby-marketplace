@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { ArrowRight, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { CATEGORIES, LISTING_COLS, STATES, type Listing, formatNaira, listingImage, PERIODS } from "@/lib/listings";
+import { APARTMENT_SUBTYPES, CATEGORIES, LISTING_COLS, STATES, type Listing, formatNaira, listingImage, PERIODS } from "@/lib/listings";
 
-type S = { q?: string | undefined; location?: string | undefined; state?: string | undefined; city?: string | undefined; category?: string | undefined; purpose?: string | undefined; min?: number | undefined; max?: number | undefined; sort?: string | undefined };
+type S = { q?: string | undefined; location?: string | undefined; state?: string | undefined; city?: string | undefined; category?: string | undefined; subtype?: string | undefined; purpose?: string | undefined; min?: number | undefined; max?: number | undefined; sort?: string | undefined };
 const PURPOSES = [{ value: "sale", label: "For Sale" }, { value: "rent", label: "For Rent" }, { value: "short-let", label: "Short Let" }];
 
 function normalizePurpose(value: unknown): string | undefined {
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/listings/")({
     state: typeof search["state"] === "string" ? search["state"] : undefined,
     city: typeof search["city"] === "string" ? search["city"] : undefined,
     category: normalizeCategory(search["category"]),
+    subtype: typeof search["subtype"] === "string" && (APARTMENT_SUBTYPES as readonly string[]).includes(search["subtype"]) ? search["subtype"] : undefined,
     purpose: normalizePurpose(search["purpose"]),
     min: typeof search["min"] === "number" && Number.isFinite(search["min"]) ? search["min"] : undefined,
     max: typeof search["max"] === "number" && Number.isFinite(search["max"]) ? search["max"] : undefined,
@@ -56,6 +57,7 @@ function ListingsPage() {
       if (s.state) query = query.eq("state", s.state);
       if (s.city) query = query.ilike("city", "%" + clean(s.city) + "%");
       if (s.category) query = query.eq("category", s.category);
+      if (s.category === "Apartment" && s.subtype) query = query.eq("property_subtype", s.subtype);
       if (s.purpose === "short-let") query = query.in("purpose", ["short-let", "short_let", "shortlet"]); else if (s.purpose) query = query.eq("purpose", s.purpose);
       if (s.min !== undefined) query = query.gte("price", s.min);
       if (s.max !== undefined) query = query.lte("price", s.max);
@@ -120,12 +122,14 @@ function ListingsFilters({ s, location }: { s: S; location: string }) {
   useEffect(() => setQuery(location), [location]);
   const set = (patch: Partial<S>) => navigate({ search: (previous) => ({ ...previous, ...patch }) });
   const field = "min-h-11 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary";
+  const categoryOnly = !!s.category && s.category !== "Apartment";
   return <form onSubmit={(event) => { event.preventDefault(); set({ location: query.trim() || undefined, q: undefined }); }} className="mt-5 grid gap-3 rounded-xl bg-card p-4 shadow-card sm:grid-cols-2 lg:grid-cols-6">
     <label className="flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 sm:col-span-2 lg:col-span-2"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="City, state, or area" aria-label="Search city, state, or area" className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none" /></label>
     <select aria-label="State" className={field} value={s.state ?? ""} onChange={(event) => set({ state: event.target.value || undefined, city: undefined })}><option value="">All states</option>{STATES.map((state) => <option key={state} value={state}>{state}</option>)}</select>
-    <select aria-label="Category" className={field} value={s.category ?? ""} onChange={(event) => set({ category: event.target.value || undefined })}><option value="">All types</option>{CATEGORIES.map((category) => <option key={category.name} value={category.name}>{category.name}</option>)}</select>
-    <select aria-label="Purpose" className={field} value={s.purpose ?? ""} onChange={(event) => set({ purpose: event.target.value || undefined })}><option value="">For Sale / Rent / Short Let</option>{PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</select>
-    <select aria-label="Sort properties" className={field} value={s.sort ?? ""} onChange={(event) => set({ sort: event.target.value || undefined })}><option value="">Newest</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option></select>
+    {!categoryOnly && <select aria-label="Category" className={field} value={s.category ?? ""} onChange={(event) => set({ category: event.target.value || undefined, subtype: undefined })}><option value="">All types</option>{CATEGORIES.map((category) => <option key={category.name} value={category.name}>{category.name}</option>)}</select>}
+    {!categoryOnly && <select aria-label="Purpose" className={field} value={s.purpose ?? ""} onChange={(event) => set({ purpose: event.target.value || undefined })}><option value="">For Sale / Rent / Short Let</option>{PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</select>}
+    {!categoryOnly && <select aria-label="Sort properties" className={field} value={s.sort ?? ""} onChange={(event) => set({ sort: event.target.value || undefined })}><option value="">Newest</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option></select>}
+    {s.category === "Apartment" && <select aria-label="Apartment type" className={field} value={s.subtype ?? ""} onChange={(event) => set({ subtype: event.target.value || undefined })}><option value="">All apartment types</option>{APARTMENT_SUBTYPES.map((subtype) => <option key={subtype}>{subtype}</option>)}</select>}
     <input aria-label="Minimum price" type="number" min="0" placeholder="Min price (₦)" className={field} value={s.min ?? ""} onChange={(event) => set({ min: event.target.value ? Number(event.target.value) : undefined })} />
     <input aria-label="Maximum price" type="number" min="0" placeholder="Max price (₦)" className={field} value={s.max ?? ""} onChange={(event) => set({ max: event.target.value ? Number(event.target.value) : undefined })} />
     <button type="submit" className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Search</button>
