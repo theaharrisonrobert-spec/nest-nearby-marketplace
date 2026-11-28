@@ -30,7 +30,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   person: AdminReviewPerson | null;
-  mode: "account" | "identity" | "blue_tick";
+  mode: "account" | "identity";
   busy?: boolean;
   onApprove?: () => void | Promise<void>;
   onReject?: () => void | Promise<void>;
@@ -177,9 +177,9 @@ export function AdminIdentityReviewDialog({
     return () => { cancelled = true; };
   }, [open, person]);
 
-  const hasBothDocuments = !!person?.id_document_path && !!person.selfie_document_path;
-  const previewsReady = hasBothDocuments && idLoaded && selfieLoaded && !loadFailed && !loading;
-  const identityActionsReady = (mode === "identity" || mode === "blue_tick") && previewsReady;
+  const hasRequiredDocuments = !!person?.id_document_path && (person.account_type === "tenant" || !!person.selfie_document_path);
+  const previewsReady = hasRequiredDocuments && idLoaded && (person?.account_type === "tenant" || selfieLoaded) && !loadFailed && !loading;
+  const identityActionsReady = mode === "identity" && previewsReady;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -189,7 +189,7 @@ export function AdminIdentityReviewDialog({
             <DialogHeader>
               <DialogTitle>{person.full_name || "Unnamed user"}</DialogTitle>
               <DialogDescription>
-                {mode === "blue_tick" ? "Compare the live camera selfie with the uploaded ID photo before approving Blue Tick." : mode === "identity" ? "Review identity documents before making a verification decision." : "Account approval is separate from landlord identity verification."}
+                {mode === "identity" ? "Review identity documents before making a verification decision." : "Account approval is separate from landlord identity verification."}
               </DialogDescription>
             </DialogHeader>
 
@@ -201,33 +201,33 @@ export function AdminIdentityReviewDialog({
               <div><dt className="text-muted-foreground">Date joined</dt><dd className="font-medium">{new Date(person.created_at).toLocaleString("en-NG")}</dd></div>
               <div><dt className="text-muted-foreground">ID type</dt><dd className="font-medium">{person.id_type || "Not provided"}</dd></div>
               {mode === "identity" && <div><dt className="text-muted-foreground">ID number</dt><dd className="break-all font-medium">{person.id_number || "Not provided"}</dd></div>}
-              {mode === "identity" && <div><dt className="text-muted-foreground">Verification fee</dt><dd className="font-medium">Free — no payment required</dd></div>}
+              {mode === "identity" && <div><dt className="text-muted-foreground">Verification fee</dt><dd className="font-medium">{person.account_type === "tenant" ? "Free (Tenant)" : person.verification_fee_paid ? "Paid" : "Not Paid"}</dd></div>}
             </dl>
 
             <section aria-label="Identity document status" className="space-y-3">
               {!person.id_document_path ? (
                 <p className="rounded-lg border border-amber-500/40 bg-primary/10 p-4 text-sm font-medium">Awaiting ID Upload — identity approval is unavailable until an ID is uploaded.</p>
               ) : (
-                <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">ID Uploaded{person.selfie_document_path ? " · Selfie uploaded" : " · Awaiting selfie upload"}</p>
+                <p className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm font-medium">ID Uploaded{person.selfie_document_path ? " · Selfie uploaded" : person.account_type === "tenant" ? "" : " · Awaiting selfie upload"}</p>
               )}
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className={person.account_type === "tenant" ? "max-w-xl" : "grid gap-4 lg:grid-cols-2"}>
                 <DocumentPanel label="ID document" path={person.id_document_path} document={idDocument} onLoaded={() => setIdLoaded(true)} onFailed={() => setLoadFailed(true)} zoom={zoom} onZoomChange={setZoom} />
-                <DocumentPanel label="Selfie" path={person.selfie_document_path} document={selfieDocument} onLoaded={() => setSelfieLoaded(true)} onFailed={() => setLoadFailed(true)} zoom={zoom} onZoomChange={setZoom} />
+                {person.account_type !== "tenant" && <DocumentPanel label="Selfie" path={person.selfie_document_path} document={selfieDocument} onLoaded={() => setSelfieLoaded(true)} onFailed={() => setLoadFailed(true)} zoom={zoom} onZoomChange={setZoom} />}
               </div>
             </section>
 
-            {(mode === "identity" || mode === "blue_tick") && (
+            {mode === "identity" && (
               <div className="space-y-4 border-t border-border pt-4">
-                {!hasBothDocuments && <p className="text-sm text-muted-foreground">Upload both documents before this submission can be reviewed.</p>}
-                {hasBothDocuments && (
+                {!hasRequiredDocuments && <p className="text-sm text-muted-foreground">{person.account_type === "tenant" ? "Upload the ID before this submission can be reviewed." : "Upload both the ID and selfie before this submission can be reviewed."}</p>}
+                {hasRequiredDocuments && (
                   <label className="flex items-start gap-2 text-sm">
                     <input type="checkbox" checked={nameMatchConfirmed} disabled={!previewsReady} onChange={(event) => setNameMatchConfirmed(event.target.checked)} className="mt-1" />
-                    <span>{mode === "blue_tick" ? "I compared the live selfie with the ID photo and completed the face match check." : "I viewed both documents and manually confirmed the name on the ID matches the registered name above."}</span>
+                    <span>{person.account_type === "tenant" ? "I reviewed the ID and confirmed the name matches the registered name above." : "I viewed both documents and manually confirmed the name on the ID matches the registered name above."}</span>
                   </label>
                 )}
                 <div className="flex flex-wrap justify-end gap-3">
-                  <button type="button" disabled={!identityActionsReady || busy} onClick={() => void onReject?.()} className="rounded-lg border border-destructive px-4 py-2 font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-50">{mode === "blue_tick" ? "Reject Blue Tick" : "Reject identity"}</button>
-                  <button type="button" disabled={!identityActionsReady || !nameMatchConfirmed || busy} onClick={() => void onApprove?.()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4" />{mode === "blue_tick" ? "Approve Blue Tick" : "Approve identity"}</button>
+                  <button type="button" disabled={!identityActionsReady || busy} onClick={() => void onReject?.()} className="rounded-lg border border-destructive px-4 py-2 font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-50">Reject identity</button>
+                  <button type="button" disabled={!identityActionsReady || !nameMatchConfirmed || busy} onClick={() => void onApprove?.()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4" />Approve identity</button>
                 </div>
               </div>
             )}
