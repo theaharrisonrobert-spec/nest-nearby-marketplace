@@ -5,6 +5,7 @@ import { Bath, BedDouble, Heart, MapPin, Square } from "lucide-react";
 import { type Listing, formatNaira, listingImage, PERIODS } from "@/lib/listings";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { ListingMediaGallery } from "@/components/ListingMediaGallery";
 
 export function ListingCard({ l }: { l: Listing }) {
   const [fav, setFav] = useState(false);
@@ -14,6 +15,14 @@ export function ListingCard({ l }: { l: Listing }) {
     queryFn: async () => user ? (await supabase.from("profiles").select("approval_status, is_blocked").eq("id", user.id).maybeSingle()).data : null,
   });
   const canSave = !!user && profile?.approval_status === "approved" && !profile.is_blocked;
+  const { data: media = [] } = useQuery({
+    queryKey: ["listing-media", l.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listing_media").select("id, listing_id, media_url, media_type, sort_order").eq("listing_id", l.id).order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   useEffect(() => {
     setFav(JSON.parse(localStorage.getItem("rr-favs") || "[]").includes(l.id));
   }, [l.id]);
@@ -27,14 +36,14 @@ export function ListingCard({ l }: { l: Listing }) {
     setFav(!fav);
   }
   return (
-    <Link to="/listings/$id" params={{ id: l.id }} className="block overflow-hidden rounded-xl bg-card p-2 shadow-card transition hover:-translate-y-1">
+    <article className="overflow-hidden rounded-xl bg-card p-2 shadow-card transition hover:-translate-y-1">
       <div className="relative">
-        <img src={listingImage(l)} alt={l.title} loading="lazy" className="aspect-[16/10] w-full rounded-lg object-cover" />
+        <ListingMediaGallery media={media} fallbackUrl={listingImage(l)} title={l.title} compact />
         <button type="button" onClick={toggle} disabled={!canSave} title={canSave ? "Save property" : "Sign in and get approved to save properties"} aria-label="Save" className="absolute right-2 top-2 text-ink-foreground disabled:cursor-not-allowed disabled:opacity-50">
           <Heart className={`h-6 w-6 drop-shadow ${fav ? "fill-destructive text-destructive" : ""}`} />
         </button>
       </div>
-      <div className="p-3">
+      <Link to="/listings/$id" params={{ id: l.id }} className="block p-3">
         <div className="mb-2 flex flex-wrap gap-1">
           <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-white">{l.purpose === "sale" ? "For Sale" : "For Rent"}</span>
           {l.sponsored && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-foreground">Sponsored</span>}
@@ -55,7 +64,7 @@ export function ListingCard({ l }: { l: Listing }) {
           {l.bathrooms != null && <span className="flex items-center gap-1"><Bath className="h-4 w-4" />{l.bathrooms} Baths</span>}
           {l.size_sqft != null && <span className="flex items-center gap-1"><Square className="h-4 w-4" />{l.size_sqft.toLocaleString()} sqft</span>}
         </div>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }

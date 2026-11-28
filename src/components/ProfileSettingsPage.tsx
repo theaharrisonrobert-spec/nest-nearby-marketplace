@@ -203,14 +203,14 @@ export function ProfileSettingsPage({ user }: { user: User }) {
             </label>
           </div>
           <form onSubmit={(event) => void saveProfile(event)} className="mt-6 grid gap-4 sm:grid-cols-2">
-            <label id="account-type" className="grid gap-1.5 text-sm font-medium sm:col-span-2">Account Type
+            {profile?.account_type === "tenant" ? <div id="account-type" className="grid gap-1.5 text-sm font-medium sm:col-span-2"><span>Account Type</span><span className={`${fieldClass} flex items-center rounded-md border border-border px-3`}>Tenant</span></div> : <label id="account-type" className="grid gap-1.5 text-sm font-medium sm:col-span-2">Account Type
               <select value={accountType} onChange={(event) => setAccountType(event.target.value as ProfileAccountType)} className={`${fieldClass} rounded-md border border-border px-3`}>
                 <option value="tenant">Tenant</option>
                 <option value="landlord">Landlord</option>
                 <option value="agent">Agent</option>
               </select>
               <span className="text-xs font-normal text-muted-foreground">Landlord and Agent accounts can post properties after required verification.</span>
-            </label>
+            </label>}
             <label className="grid gap-1.5 text-sm font-medium">First Name<Input autoComplete="given-name" className={fieldClass} value={firstName} onChange={(event) => setFirstName(event.target.value)} required /></label>
             <label className="grid gap-1.5 text-sm font-medium">Last Name<Input autoComplete="family-name" className={fieldClass} value={lastName} onChange={(event) => setLastName(event.target.value)} /></label>
             <label className="grid gap-1.5 text-sm font-medium">Phone<Input type="tel" autoComplete="tel" className={fieldClass} value={phone} onChange={(event) => setPhone(event.target.value)} /><span className="text-xs font-normal text-muted-foreground">{profile?.phone_verified_at ? "Your phone is verified and can’t be changed here." : ""}</span></label>

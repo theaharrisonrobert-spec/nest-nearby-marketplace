@@ -6,14 +6,14 @@ import office from "@/assets/office.jpg";
 import land from "@/assets/land.jpg";
 import warehouse from "@/assets/warehouse.jpg";
 import hall from "@/assets/hall.jpg";
-import apartmentCard from "@/assets/apartment-card.jpg";
+import hero from "@/assets/hero.jpg";
 
 type Row = Database["public"]["Tables"]["listings"]["Row"];
 export type Listing = Omit<Row, "contact_phone" | "address" | "promotion_requested">;
 
 /** Public columns only — phone and exact address are never readable by visitors. */
 export const LISTING_COLS =
-  "id, owner_id, title, description, category, property_subtype, purpose, price, price_period, negotiable, state, city, bedrooms, bathrooms, size_sqft, image_url, contact_name, created_at, status, availability_status, rejection_reason, is_sample, sponsored, details_reviewed, landmarks, amenities, show_address, featured_until, boosted_until, early_access_until";
+  "id, owner_id, title, description, category, purpose, price, price_period, negotiable, state, city, bedrooms, bathrooms, size_sqft, image_url, contact_name, created_at, status, availability_status, rejection_reason, is_sample, sponsored, details_reviewed, landmarks, amenities, show_address, featured_until, early_access_until";
 
 export const AMENITIES = ["Furnished", "24/7 Security", "Constant Power", "Borehole Water", "Parking Space", "Swimming Pool", "Gym", "Good Access Road", "Air Conditioning", "Fitted Kitchen"];
 
@@ -23,11 +23,9 @@ export const ACCOUNT_TYPES = {
 } as const;
 export type AccountType = keyof typeof ACCOUNT_TYPES;
 
-
-export const APARTMENT_SUBTYPES = ["Duplex", "Flat", "Mini Flat", "Self-Contain", "Room & Parlour", "Studio", "Bungalow", "Penthouse", "Villa", "Townhouse"] as const;
-
 export const CATEGORIES = [
-  { name: "Apartment", sub: "Homes for Rent & Sale", img: apartmentCard },
+  { name: "Apartments", sub: "For Rent & Sale", img: apartment },
+  { name: "Houses", sub: "Duplexes & bungalows", img: hero },
   { name: "Shops", sub: "For Rent & Sale", img: shop },
   { name: "Malls", sub: "Mall units & plazas", img: mall },
   { name: "Office Spaces", sub: "For Rent & Sale", img: office },
